@@ -141,7 +141,6 @@ customer_support_resolution_agent/
    ```env
    GEMINI_API_KEY=your_google_gemini_api_key_here
    ```
-   > Note: Free API keys are available at [Google AI Studio](https://aistudio.google.com/apikey). If left unconfigured, the system automatically uses the local RAG template fallback.
 
 5. **Build the ChromaDB Vector Store**:
    ```bash
@@ -175,44 +174,3 @@ customer_support_resolution_agent/
    *The application will open on **`http://localhost:5173/`***
 
 ---
-
-## API Reference
-
-### `POST /resolve`
-
-Submits a customer incident text for AI diagnosis and resolution.
-
-#### Request Body
-```json
-{
-  "incident_text": "I was charged twice on my credit card for order #49201",
-  "user_name": "Alice"
-}
-```
-
-#### Response Body
-```json
-{
-  "status": "resolved",
-  "incident_text": "I was charged twice on my credit card for order #49201",
-  "user_name": "Alice",
-  "predicted_intent": "payment_failed",
-  "confidence": 0.88,
-  "knowledge_title": "Duplicate Charges on Payment Card",
-  "response": "Hello Alice,\n\nI understand you're seeing duplicate charges for your order. Rest assured...",
-  "retrieved_articles": [
-    {
-      "title": "Duplicate Charges on Payment Card",
-      "category": "payment_failed",
-      "similarity": 0.82
-    }
-  ],
-  "rag_enabled": true
-}
-```
-
----
-
-## License
-
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
