@@ -1,130 +1,88 @@
 /* ============================================
-   Design System — Dark-mode foundation
+   Front Desk — design tokens
+   Deep aubergine rail against warm porcelain.
    ============================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap');
 
 :root {
-  /* ── Palette (Solid, crisp slate & obsidian) ── */
-  --bg-deep: #0a0e17;
-  --bg-surface: #111827;
-  --bg-card: #1f2937;
-  --bg-card-solid: #1e293b;
-  --bg-input: #1e293b;
-  --bg-hover: rgba(255, 255, 255, 0.05);
+  /* ── Rail (the dark side) ── */
+  --rail:        #2b1b33;
+  --rail-raised: #3a2543;
+  --rail-line:   #4a3253;
+  --rail-text:   #e9e0ec;
+  --rail-muted:  #a794ae;
 
-  --border-subtle: #1f293d;
-  --border-medium: #374151;
-  --border-accent: #4f46e5;
+  /* ── Workspace (the light side) ── */
+  --paper:   #edeeea;
+  --card:    #ffffff;
+  --sunk:    #e4e5df;
+  --ink:     #221a26;
+  --ink-mid: #5c5262;
+  --ink-soft:#867d8c;
+  --line:    #d9d7d1;
+  --line-soft:#e8e7e2;
 
-  --text-primary: #f9fafb;
-  --text-secondary: #9ca3af;
-  --text-muted: #6b7280;
-  --text-inverse: #ffffff;
+  /* ── Signals ── */
+  --teal:       #0e6e66;
+  --teal-deep:  #0a5049;
+  --teal-wash:  #e0eeeb;
+  --moss:       #3c7a4e;
+  --moss-wash:  #e3eee5;
+  --ochre:      #a8690f;
+  --ochre-wash: #f6ead6;
+  --blush:      #f6ece4;
 
-  /* ── Solid Accents ── */
-  --accent-primary: #4f46e5;
-  /* Indigo */
-  --accent-success: #10b981;
-  /* Emerald */
-  --accent-warning: #f59e0b;
-  /* Amber */
-  --accent-info: #0284c7;
-  /* Sky Blue */
+  /* ── Type ── */
+  --sans:  'Bricolage Grotesque', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --serif: 'Newsreader', Georgia, 'Times New Roman', serif;
 
-  /* ── Solid Card Styles ── */
-  --brand-solid: #4f46e5;
-  --card-border: #1f293d;
+  /* ── Geometry ── */
+  --r-xs: 3px;
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 18px;
+  --rail-w: 268px;
+  --inspector-w: 320px;
 
-  /* ── Shadows (Subtle, clean, architectural) ── */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.35);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
-
-  /* ── Typography ── */
-  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-
-  /* ── Spacing & Geometry ── */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 18px;
-  --radius-full: 9999px;
-
-  /* ── Layout ── */
-  --sidebar-width: 280px;
-
-  /* ── Transitions ── */
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  --shadow-lift: 0 1px 2px rgba(34,26,38,.06), 0 8px 24px -12px rgba(34,26,38,.18);
 }
 
-/* ── Global reset ── */
-*,
-*::before,
-*::after {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
-html {
-  font-size: 16px;
+html, body, #root {
+  width: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  font-family: var(--sans);
+  background: var(--paper);
+  color: var(--ink);
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
 }
 
-body {
-  font-family: var(--font-sans);
-  background: var(--bg-deep);
-  color: var(--text-primary);
-  line-height: 1.6;
-  height: 100vh;
-  overflow: hidden;
-}
+button, input, textarea { font: inherit; color: inherit; }
+[hidden] { display: none !important; }
+button { cursor: pointer; background: none; border: none; }
 
-#root {
-  width: 100%;
-  height: 100vh;
-  overflow: hidden;
-}
-
-/* ── Custom Scrollbar ── */
-::-webkit-scrollbar {
-  width: 5px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: var(--radius-full);
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.15);
-}
-
-/* ── Selection ── */
-::selection {
-  background: rgba(124, 92, 252, 0.35);
-  color: var(--text-inverse);
-}
-
-/* ── Focus ring utility ── */
+/* Visible keyboard focus everywhere, no focus ring on mouse clicks */
 :focus-visible {
-  outline: 2px solid var(--accent-1);
+  outline: 2px solid var(--teal);
   outline-offset: 2px;
+  border-radius: var(--r-xs);
 }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: #cfcdc7;
+  border-radius: 99px;
+  border: 3px solid var(--paper);
+}
+::-webkit-scrollbar-thumb:hover { background: #b6b3ac; }
 
 @media (prefers-reduced-motion: reduce) {
-
-  *,
-  *::before,
-  *::after {
+  *, *::before, *::after {
     animation-duration: .001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: .001ms !important;
