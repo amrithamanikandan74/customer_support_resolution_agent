@@ -1,0 +1,24 @@
+text,intent
+I can't log in to my account,login_issue
+I am unable to sign in,login_issue
+Login is failing for my account,login_issue
+My password reset link is not working,password_reset
+Reset password email did not arrive,password_reset
+I did not receive the reset link,password_reset
+Payment failed but money got deducted,payment_failed
+Transaction failed and amount deducted,payment_failed
+My payment did not go through,payment_failed
+I want a refund for my order,refund_request
+I need my money back,refund_request
+Please refund my purchase,refund_request
+Where is my order,order_delay
+My delivery is late,order_delay
+Order has not arrived yet,order_delay
+My account is locked,account_locked
+Account locked after too many attempts,account_locked
+I cannot access my account,account_locked
+Login blocked due to security,account_locked
+Locked out of my account,account_locked
+The app is showing an unknown error,technical_error
+I am getting a 500 server error,technical_error
+The website crashed during checkout,technical_error

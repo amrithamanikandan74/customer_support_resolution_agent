@@ -1,0 +1,152 @@
+[
+  {
+    "id": "kb-001",
+    "category": "login_issue",
+    "title": "Cannot Log In — Invalid Credentials",
+    "content": "If you are unable to log in due to invalid credentials, first verify that you are entering the correct username and password. Ensure that Caps Lock is off and that there are no extra spaces. If you recently changed your password, use the new one. Try logging in from an incognito or private browser window to rule out cached data issues."
+  },
+  {
+    "id": "kb-002",
+    "category": "login_issue",
+    "title": "Login Fails After Browser Update",
+    "content": "Some browser updates can cause login issues due to incompatible cookies or cached sessions. Clear your browser cache and cookies, then restart the browser. If the issue persists, try a different browser or disable any recently added browser extensions that might interfere with the login process."
+  },
+  {
+    "id": "kb-003",
+    "category": "login_issue",
+    "title": "Login Page Not Loading or Timing Out",
+    "content": "If the login page does not load or times out, check your internet connection first. Try accessing other websites to confirm connectivity. Disable VPN or proxy if enabled. If the problem is intermittent, it may be a temporary server issue — wait a few minutes and try again. You can also check our status page for any ongoing outages."
+  },
+  {
+    "id": "kb-004",
+    "category": "password_reset",
+    "title": "Password Reset Email Not Received",
+    "content": "If you did not receive the password reset email, check your spam or junk folder. Ensure the email address you entered matches the one on your account. Some email providers may delay delivery by a few minutes. If the email still hasn't arrived after 10 minutes, try requesting a new reset link. Contact support if the problem persists."
+  },
+  {
+    "id": "kb-005",
+    "category": "password_reset",
+    "title": "Password Reset Link Expired",
+    "content": "Password reset links expire after 30 minutes for security purposes. If your link has expired, go to the login page and request a new password reset. Make sure to use the link promptly after receiving it. Do not click the link multiple times as only the most recent link is valid."
+  },
+  {
+    "id": "kb-006",
+    "category": "password_reset",
+    "title": "New Password Not Accepted — Validation Errors",
+    "content": "When setting a new password, it must meet our security requirements: at least 8 characters long, containing one uppercase letter, one lowercase letter, one number, and one special character. Your new password cannot be the same as any of your last 5 passwords. Avoid using common words or patterns like '12345678' or 'password'."
+  },
+  {
+    "id": "kb-007",
+    "category": "payment_failed",
+    "title": "Payment Failed but Amount Was Deducted",
+    "content": "If your payment failed but the amount was deducted from your account, this is typically a temporary hold by your bank. The amount is usually auto-reversed within 3 to 5 business days. Do not attempt the payment again until the reversal is confirmed to avoid a double charge. If the amount is not refunded after 5 business days, contact your bank with the transaction reference number."
+  },
+  {
+    "id": "kb-008",
+    "category": "payment_failed",
+    "title": "Payment Declined by Bank or Card Issuer",
+    "content": "If your payment is being declined, the most common reasons are: insufficient funds, incorrect card details (number, expiry, CVV), international transaction restrictions, or daily transaction limits. Contact your bank to verify there are no blocks on online transactions. You can also try a different payment method such as another card, UPI, or net banking."
+  },
+  {
+    "id": "kb-009",
+    "category": "payment_failed",
+    "title": "Payment Gateway Error During Checkout",
+    "content": "A payment gateway error during checkout is usually a temporary issue. Do not refresh the page or press the back button as this may cause duplicate charges. Wait 2-3 minutes, then check your order history to see if the order was placed successfully. If not, clear your browser cache and try again. If the error persists, try a different payment method or browser."
+  },
+  {
+    "id": "kb-010",
+    "category": "payment_failed",
+    "title": "Double Charge or Duplicate Payment",
+    "content": "If you see a duplicate charge on your statement, first check your order history to confirm whether multiple orders were created. If only one order exists, the second charge is likely a temporary authorization hold that will be released by your bank within 3-5 business days. If both charges are confirmed as actual debits, contact our support team with both transaction IDs for an immediate refund of the duplicate."
+  },
+  {
+    "id": "kb-011",
+    "category": "refund_request",
+    "title": "Refund for Cancelled Order",
+    "content": "Once an order is cancelled, the refund is initiated automatically. Refunds typically take 5-7 business days to reflect in your account, depending on your payment method: credit card refunds take 5-7 days, debit card and net banking refunds take 3-5 days, and UPI refunds are usually processed within 24-48 hours. You will receive a confirmation email once the refund is processed."
+  },
+  {
+    "id": "kb-012",
+    "category": "refund_request",
+    "title": "Refund for Defective or Wrong Product",
+    "content": "If you received a defective or wrong product, you are eligible for a full refund or replacement. Please initiate a return request from your order details page within 7 days of delivery. Upload photos of the product showing the defect or the wrong item received. Once the return is approved, a pickup will be scheduled and your refund will be processed within 3-5 business days after the item is picked up."
+  },
+  {
+    "id": "kb-013",
+    "category": "refund_request",
+    "title": "Refund Status and Tracking",
+    "content": "To track your refund status, go to your order history and click on the cancelled or returned order. The refund status will show as 'Initiated', 'Processing', or 'Completed'. If the refund shows as 'Completed' but you haven't received it, please check with your bank using the ARN (Acquirer Reference Number) provided in the refund confirmation email."
+  },
+  {
+    "id": "kb-014",
+    "category": "order_delay",
+    "title": "Order Delayed Beyond Expected Delivery Date",
+    "content": "If your order has not arrived by the expected delivery date, first check the tracking page for the latest status. Common reasons for delays include high demand during sales, weather disruptions, or logistics issues in your area. If the tracking shows no movement for more than 48 hours, contact our support team and we will investigate with the courier partner and provide an updated delivery estimate."
+  },
+  {
+    "id": "kb-015",
+    "category": "order_delay",
+    "title": "Order Stuck in Transit or Out for Delivery",
+    "content": "If your order shows 'Out for Delivery' for more than 24 hours or 'In Transit' with no updates for 3+ days, it may indicate a delivery attempt issue or a logistics bottleneck. Ensure your delivery address and phone number are correct. You can contact the courier directly using the tracking ID on the logistics partner's website. If unresolved, our support team can escalate the issue."
+  },
+  {
+    "id": "kb-016",
+    "category": "order_delay",
+    "title": "Order Delivered but Not Received",
+    "content": "If the tracking status shows 'Delivered' but you have not received the package, first check with other household members, neighbors, or your building security. Sometimes the delivery partner marks it as delivered slightly before the actual drop-off. If you still cannot locate the package after 24 hours, file a complaint through the order details page and we will initiate an investigation with the courier."
+  },
+  {
+    "id": "kb-017",
+    "category": "account_locked",
+    "title": "Account Locked Due to Multiple Failed Login Attempts",
+    "content": "For your security, accounts are automatically locked after 5 consecutive failed login attempts. The lock is temporary and will be lifted after 15 minutes. After the cooldown period, try logging in again with the correct credentials. If you've forgotten your password, use the 'Forgot Password' option to reset it. Do not attempt to log in during the cooldown period as it will reset the timer."
+  },
+  {
+    "id": "kb-018",
+    "category": "account_locked",
+    "title": "Account Locked Due to Suspicious Activity",
+    "content": "If your account was locked due to suspicious activity detected by our security system, this is a protective measure. You will receive an email with details about the detected activity. To unlock your account, click the verification link in the email and verify your identity. If you did not receive the email, contact support with a valid government-issued ID for manual verification and unlocking."
+  },
+  {
+    "id": "kb-019",
+    "category": "account_locked",
+    "title": "Account Permanently Disabled or Banned",
+    "content": "Accounts may be permanently disabled for violations of our terms of service, including fraudulent activity, abuse, or chargebacks. If you believe this was done in error, you can submit an appeal through our help center. Provide your account email, a description of the situation, and any supporting documents. Appeals are reviewed within 3-5 business days and you will be notified of the outcome via email."
+  },
+  {
+    "id": "kb-020",
+    "category": "technical_error",
+    "title": "500 Internal Server Error",
+    "content": "A 500 Internal Server Error indicates a problem on our end. This is usually a temporary issue that resolves within a few minutes. Please try again after waiting 5-10 minutes. If the error persists, try clearing your browser cache, disabling browser extensions, or using a different browser. If you continue to experience the error, report it to our technical team with the exact URL, browser name, and the time of occurrence."
+  },
+  {
+    "id": "kb-021",
+    "category": "technical_error",
+    "title": "App Crashes or Freezes During Use",
+    "content": "If the app is crashing or freezing, first ensure you are running the latest version of the app. Go to your app store and check for updates. If already up to date, try force-closing the app and reopening it. Clearing the app cache from your device settings can also help. If the issue continues, uninstall and reinstall the app. Please report persistent crashes to support with your device model, OS version, and the action you were performing when the crash occurred."
+  },
+  {
+    "id": "kb-022",
+    "category": "technical_error",
+    "title": "Website Not Loading or Showing Blank Page",
+    "content": "If the website shows a blank page or fails to load, try the following steps: 1) Clear browser cache and cookies, 2) Disable ad blockers or browser extensions, 3) Try a different browser, 4) Check if the issue occurs in incognito mode. If the website loads in incognito but not in normal mode, a browser extension is likely causing the issue. Disable extensions one by one to identify the culprit."
+  },
+  {
+    "id": "kb-023",
+    "category": "technical_error",
+    "title": "Error During Checkout or Cart Issues",
+    "content": "If you encounter errors during checkout such as 'Unable to process request' or items disappearing from your cart, first ensure your session has not expired by refreshing the page. Check that all required fields (shipping address, payment details) are filled correctly. If items were removed from your cart, they may have gone out of stock. Try adding them again or check for alternatives. Use a stable internet connection during checkout to avoid timeouts."
+  },
+  {
+    "id": "kb-024",
+    "category": "subscription",
+    "title": "Cancel or Modify Subscription Plan",
+    "content": "To cancel or modify your subscription, go to Account Settings > Subscriptions. You can downgrade, upgrade, or cancel your plan at any time. If you cancel, your subscription will remain active until the end of the current billing period. No refunds are issued for partial billing periods unless you are within the 7-day trial period. After cancellation, your account will revert to the free tier with limited features."
+  },
+  {
+    "id": "kb-025",
+    "category": "subscription",
+    "title": "Unexpected Subscription Charge",
+    "content": "If you see an unexpected subscription charge, it may be due to an auto-renewal of your plan. Check your subscription settings to see if auto-renewal is enabled. If you cancelled your subscription but were still charged, ensure the cancellation was confirmed — you should have received a cancellation confirmation email. If the charge was made in error, contact support within 48 hours for a full refund."
+  }
+]
