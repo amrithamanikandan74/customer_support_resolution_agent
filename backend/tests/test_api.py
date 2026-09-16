@@ -7,7 +7,10 @@ client = TestClient(app)
 def test_read_root():
     response = client.get("/")
     assert response.status_code == 200
-    assert response.json() == {"message": "Customer Support Resolution Agent is running"}
+    data = response.json()
+    assert data["ok"] is True
+    assert "message" in data
+    assert "llm_connected" in data
 
 
 def test_resolve_endpoint():

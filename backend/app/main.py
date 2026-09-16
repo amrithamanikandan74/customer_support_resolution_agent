@@ -1,12 +1,28 @@
-from fastapi import FastAPI
+import json
+
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from app.schemas import IncidentRequest, ResolutionResponse
+from fastapi.responses import StreamingResponse
+
+from app.config import AGENT_NAME, KNOWLEDGE_BASE_FILE
+from app.schemas import (
+    Ack,
+    Article,
+    EscalationRequest,
+    EscalationResponse,
+    FeedbackRequest,
+    Health,
+    IncidentRequest,
+    ResolutionResponse,
+    StatsResponse,
+)
+from app.services import store
 from app.services.resolution_orchestrator import ResolutionOrchestrator
 
 app = FastAPI(
     title="Customer Support Resolution Agent",
-    description="Provide a customer incident as input. Example inputs are shown below for testing.",
-    version="1.0.0"
+    description="Retrieval-grounded support agent with escalation, feedback and ops endpoints.",
+    version="2.0.0",
 )
 
 app.add_middleware(
@@ -20,15 +36,175 @@ app.add_middleware(
 orchestrator = ResolutionOrchestrator()
 
 
-@app.get("/")
-def root():
-    return {"message": "Customer Support Resolution Agent is running"}
+def _knowledge() -> list[dict]:
+    return store.load_knowledge(KNOWLEDGE_BASE_FILE)
 
+
+# ── Health ─────────────────────────────────────────────────────────────
+
+@app.get("/", response_model=Health)
+def root():
+    return Health(
+        ok=True,
+        message=f"{AGENT_NAME} is on the desk",
+        llm_connected=orchestrator.response_generator.connected,
+        articles_indexed=orchestrator.rag_retriever.collection.count(),
+    )
+
+
+# ── Resolving ──────────────────────────────────────────────────────────
 
 @app.post("/resolve", response_model=ResolutionResponse)
 def resolve_incident(request: IncidentRequest):
-    result = orchestrator.resolve(
-        request.incident_text,
-        request.user_name
+    return orchestrator.resolve(
+        incident_text=request.incident_text,
+        user_name=request.user_name or "Customer",
+        history=[t.model_dump() for t in request.history],
+        conversation_id=request.conversation_id or "",
+        language=request.language or "English",
     )
-    return result
+
+
+@app.post("/resolve/stream")
+def resolve_incident_stream(request: IncidentRequest):
+    """
+    Same pipeline, delivered as server-sent events.
+
+    Events, in order:
+      meta  — intent, confidence, matched articles, status. Arrives immediately,
+              so the UI can show the reasoning while the reply is still being written.
+      token — a chunk of the reply text.
+      done  — the assembled reply, for logging and copy-to-clipboard.
+    """
+    history = [t.model_dump() for t in request.history]
+    user_name = request.user_name or "Customer"
+    text = request.incident_text
+    language = request.language or "English"
+
+    def events():
+        a = orchestrator.assess(text, history)
+        status = "escalated" if a["escalation_reason"] else "resolved"
+        articles = orchestrator._summarise(a["articles"])
+
+        meta = {
+            "status": status,
+            "predicted_intent": a["intent"],
+            "confidence": a["confidence"],
+            "retrieved_articles": articles,
+            "knowledge_title": a["articles"][0]["title"] if (a["articles"] and status == "resolved") else None,
+            "mood": a["mood"],
+            "escalation_reason": a["escalation_reason"],
+            "follow_up": a["is_follow_up"],
+            "suggested_replies": orchestrator._suggestions(status, a["intent"]),
+            "language": language,
+        }
+        yield f"event: meta\ndata: {json.dumps(meta)}\n\n"
+
+        parts: list[str] = []
+        if status == "escalated":
+            reply = orchestrator.response_generator.generate_escalation(
+                incident_text=text,
+                confidence=a["confidence"],
+                user_name=user_name,
+                retrieved_articles=a["articles"],
+                reason=a["escalation_reason"],
+                mood=a["mood"],
+                history=history,
+                language=language,
+            )
+            parts.append(reply)
+            yield f"event: token\ndata: {json.dumps(reply)}\n\n"
+        else:
+            for chunk in orchestrator.response_generator.stream(
+                incident_text=text,
+                intent=a["intent"],
+                retrieved_articles=a["articles"],
+                user_name=user_name,
+                mood=a["mood"],
+                history=history,
+                is_follow_up=a["is_follow_up"],
+                language=language,
+            ):
+                parts.append(chunk)
+                yield f"event: token\ndata: {json.dumps(chunk)}\n\n"
+
+        full = "".join(parts).strip()
+        result = {
+            **meta,
+            "incident_text": text,
+            "user_name": user_name,
+            "response": full,
+            "rag_enabled": True,
+        }
+        store.log_resolution(result, request.conversation_id or "")
+        yield f"event: done\ndata: {json.dumps({'response': full})}\n\n"
+
+    return StreamingResponse(
+        events(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
+# ── Knowledge ──────────────────────────────────────────────────────────
+
+@app.get("/knowledge", response_model=list[Article])
+def knowledge():
+    return _knowledge()
+
+
+@app.get("/knowledge/{article_id}", response_model=Article)
+def knowledge_article(article_id: str):
+    for a in _knowledge():
+        if a["id"] == article_id:
+            return a
+    raise HTTPException(status_code=404, detail="No article with that id")
+
+
+# ── Feedback ───────────────────────────────────────────────────────────
+
+@app.post("/feedback", response_model=Ack)
+def feedback(request: FeedbackRequest):
+    store.log_feedback(
+        helpful=request.helpful,
+        conversation_id=request.conversation_id or "",
+        intent=request.predicted_intent or "",
+        confidence=request.confidence,
+        comment=request.comment or "",
+    )
+    return Ack(
+        message="Thanks — noted."
+        if request.helpful
+        else "Noted. That answer gets flagged for review."
+    )
+
+
+# ── Escalation ─────────────────────────────────────────────────────────
+
+@app.post("/escalate", response_model=EscalationResponse)
+def escalate(request: EscalationRequest):
+    ref = store.next_ticket_ref()
+    store.log_ticket(
+        ticket_ref=ref,
+        user_name=request.user_name,
+        email=str(request.email),
+        priority=request.priority,
+        intent=request.predicted_intent or "",
+        incident_text=request.incident_text,
+    )
+    hours = 4 if request.priority == "urgent" else 24
+    return EscalationResponse(
+        ticket_ref=ref,
+        message=(
+            f"That's with a colleague now, under {ref}. They'll reply to "
+            f"{request.email} within {hours} hours."
+        ),
+        expect_reply_within_hours=hours,
+    )
+
+
+# ── Ops ────────────────────────────────────────────────────────────────
+
+@app.get("/stats", response_model=StatsResponse)
+def stats():
+    return store.stats()
