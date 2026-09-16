@@ -2,13 +2,20 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import "./App.css";
 
 /* ══════════════════════════════════════════════
-   SVG ICONS
+   HERO / ENTERPRISE SVG ICONS
    ══════════════════════════════════════════════ */
 
-const HeadsetIcon = () => (
+const TicketIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
-    <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
+    <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v2z" />
+    <path d="M13 5v2m0 4v2m0 4v2" />
+  </svg>
+);
+
+const SearchIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="11" cy="11" r="8" />
+    <line x1="21" y1="21" x2="16.65" y2="16.65" />
   </svg>
 );
 
@@ -26,28 +33,44 @@ const PlusIcon = () => (
   </svg>
 );
 
-const MenuIcon = () => (
+const ShieldCheckIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="3" y1="6" x2="21" y2="6" />
-    <line x1="3" y1="12" x2="21" y2="12" />
-    <line x1="3" y1="18" x2="21" y2="18" />
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    <polyline points="9 12 11 14 15 10" />
   </svg>
 );
 
-const TrashIcon = () => (
+const DatabaseIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="3 6 5 6 21 6" />
-    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+    <ellipse cx="12" cy="5" rx="9" ry="3" />
+    <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" />
+    <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
   </svg>
 );
 
-const ClearIcon = () => (
+const UserIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 2v4m0 12v4m-7-7H1m22 0h-4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83" />
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+    <circle cx="12" cy="7" r="4" />
   </svg>
 );
 
-const UserKeyIcon = () => (
+const CpuIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="4" y="4" width="16" height="16" rx="2" ry="2" />
+    <rect x="9" y="9" width="6" height="6" />
+    <line x1="9" y1="1" x2="9" y2="4" />
+    <line x1="15" y1="1" x2="15" y2="4" />
+    <line x1="9" y1="20" x2="9" y2="23" />
+    <line x1="15" y1="20" x2="15" y2="23" />
+    <line x1="20" y1="9" x2="23" y2="9" />
+    <line x1="20" y1="15" x2="23" y2="15" />
+    <line x1="1" y1="9" x2="4" y2="9" />
+    <line x1="1" y1="15" x2="4" y2="15" />
+  </svg>
+);
+
+const KeyIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M21 2l-2 2m-2-2l2 2m2 0l-3 3m-3-3l3 3M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 0v9m0 0l-3-3m3 3l3-3" />
   </svg>
@@ -57,12 +80,6 @@ const CreditCardIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
     <line x1="1" y1="10" x2="23" y2="10" />
-  </svg>
-);
-
-const RefundIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M3 10h10a8 8 0 0 1 8 8v2M3 10l6 6m-6-6l6-6" />
   </svg>
 );
 
@@ -82,124 +99,81 @@ const TerminalIcon = () => (
   </svg>
 );
 
-const ShieldLockIcon = () => (
+const CopyIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-    <rect x="9" y="11" width="6" height="5" rx="1" />
+    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+  </svg>
+);
+
+const CheckIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+);
+
+const SpeakerIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" />
+  </svg>
+);
+
+const DownloadIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+    <polyline points="7 10 12 15 17 10" />
+    <line x1="12" y1="15" x2="12" y2="3" />
+  </svg>
+);
+
+const BookOpenIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+  </svg>
+);
+
+const ThumbsUpIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
+  </svg>
+);
+
+const ThumbsDownIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3" />
+  </svg>
+);
+
+const CloseIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="18" y1="6" x2="6" y2="18" />
+    <line x1="6" y1="6" x2="18" y2="18" />
   </svg>
 );
 
 /* ══════════════════════════════════════════════
-   HELPER: generate unique IDs
+   HELPERS
    ══════════════════════════════════════════════ */
-let nextId = 1;
-const uid = () => `conv-${nextId++}`;
+let ticketSeq = 101;
+const nextTicketId = () => `Chat #${ticketSeq++}`;
 
-/* ══════════════════════════════════════════════
-   HELPER: format time
-   ══════════════════════════════════════════════ */
-const formatTime = (date) => {
-  const now = new Date();
-  const d = new Date(date);
-  const diff = now - d;
-  if (diff < 60000) return "Just now";
-  if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
-  if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
-  return d.toLocaleDateString();
+const formatTime = (dateStr) => {
+  if (!dateStr) return "Just now";
+  const d = new Date(dateStr);
+  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 };
 
 /* ══════════════════════════════════════════════
-   TYPING INDICATOR
-   ══════════════════════════════════════════════ */
-function TypingIndicator() {
-  return (
-    <div className="typing-indicator-row">
-      <div className="msg-avatar"><HeadsetIcon /></div>
-      <div className="typing-bubble">
-        <span className="typing-dot" />
-        <span className="typing-dot" />
-        <span className="typing-dot" />
-      </div>
-    </div>
-  );
-}
-
-/* ══════════════════════════════════════════════
-   RESOLUTION METADATA
-   ══════════════════════════════════════════════ */
-function ResolutionMeta({ data }) {
-  if (!data) return null;
-  const { status, predicted_intent, confidence, retrieved_articles, rag_enabled } = data;
-  const pct = confidence != null ? Math.round(confidence * 100) : null;
-  const intentLabel = predicted_intent
-    ? predicted_intent.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
-    : null;
-
-  return (
-    <div className="resolution-meta">
-      <div className="meta-header">
-        <span className="meta-title">Resolution Details</span>
-        {rag_enabled && <span className="rag-pill">⚡ RAG Powered</span>}
-      </div>
-
-      {status && (
-        <div className="meta-row">
-          <span className="meta-label">Status</span>
-          <span className={`meta-badge ${status}`}>
-            {status === "resolved" ? "✓ Resolved" : "⚠ Escalated"}
-          </span>
-        </div>
-      )}
-
-      {intentLabel && (
-        <div className="meta-row">
-          <span className="meta-label">Intent</span>
-          <span className="meta-value">{intentLabel}</span>
-        </div>
-      )}
-
-      {pct != null && (
-        <div className="meta-row">
-          <span className="meta-label">Confidence</span>
-          <div className="confidence-bar-container">
-            <div className="confidence-bar">
-              <div className="confidence-fill" style={{ width: `${pct}%` }} />
-            </div>
-            <span className="meta-value">{pct}%</span>
-          </div>
-        </div>
-      )}
-
-      {retrieved_articles && retrieved_articles.length > 0 && (
-        <div className="meta-articles-section">
-          <span className="meta-label">Retrieved Knowledge Articles</span>
-          <div className="retrieved-articles-list">
-            {retrieved_articles.map((art, idx) => (
-              <div key={art.id || idx} className="article-item">
-                <span className="article-title">{art.title}</span>
-                {art.similarity != null && (
-                  <span className="article-match">
-                    {Math.round(art.similarity * 100)}% match
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ══════════════════════════════════════════════
-   WELCOME STATE (Rich Knowledge & Category Dashboard)
+   SUPPORT KNOWLEDGE CATEGORIES
    ══════════════════════════════════════════════ */
 const KNOWLEDGE_CATEGORIES = [
   {
     id: "account",
-    title: "Account & Access",
-    desc: "Login credentials, account locks, SSO and authentication",
-    icon: <UserKeyIcon />,
+    title: "Login & Password Help",
+    desc: "Help with signing in, password resets, and account locks",
+    icon: <KeyIcon />,
     issues: [
       "I can't log in to my account",
       "Account locked after failed attempts",
@@ -207,8 +181,8 @@ const KNOWLEDGE_CATEGORIES = [
   },
   {
     id: "billing",
-    title: "Billing & Payments",
-    desc: "Failed checkout, double charges, receipts and card errors",
+    title: "Payments & Refunds",
+    desc: "Double charges, failed payments, and refund requests",
     icon: <CreditCardIcon />,
     issues: [
       "My payment was charged twice",
@@ -217,246 +191,260 @@ const KNOWLEDGE_CATEGORIES = [
   },
   {
     id: "orders",
-    title: "Orders & Refunds",
-    desc: "Order returns, refund timelines, item exchanges",
-    icon: <RefundIcon />,
-    issues: [
-      "I want a refund for my order",
-      "How long does a refund process take?",
-    ],
-  },
-  {
-    id: "shipping",
-    title: "Shipping & Logistics",
-    desc: "Package tracking, courier delays, delivery updates",
+    title: "Orders & Shipping",
+    desc: "Package tracking, delivery status, and order updates",
     icon: <TruckIcon />,
     issues: [
       "My order hasn't arrived yet",
-      "Track my shipment package status",
+      "I want a refund for my order",
     ],
   },
   {
     id: "tech",
-    title: "System & Tech Errors",
-    desc: "Website crashes, 500 server codes, page load bugs",
+    title: "Website & Technical Issues",
+    desc: "App crashes, 500 error messages, and website bugs",
     icon: <TerminalIcon />,
     issues: [
       "I'm getting an error on the website",
       "Website crashed during checkout",
     ],
   },
-  {
-    id: "security",
-    title: "Security & 2FA",
-    desc: "Password reset policies, two-factor setup, privacy",
-    icon: <ShieldLockIcon />,
-    issues: [
-      "How do I reset my password?",
-      "Enable two-factor authentication",
-    ],
-  },
 ];
 
-function WelcomeState({ onQuickIssue }) {
+/* ══════════════════════════════════════════════
+   WELCOME INTAKE HUB (Empty state dashboard)
+   ══════════════════════════════════════════════ */
+function IntakeHub({ onQuickTicket, onOpenKB }) {
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredCategories = KNOWLEDGE_CATEGORIES.map((cat) => ({
+    ...cat,
+    issues: cat.issues.filter((iss) =>
+      iss.toLowerCase().includes(searchQuery.toLowerCase())
+    ),
+  })).filter((cat) => cat.issues.length > 0);
+
   return (
-    <div className="welcome-dashboard">
-      {/* ── System Banner ── */}
-      <div className="welcome-hero">
-        <div className="welcome-hero-badge">
-          <span className="live-status-dot" />
-          ChromaDB RAG Engine Connected • 25 Knowledge Articles
+    <div className="intake-hub">
+      {/* Overview Banner */}
+      <div className="intake-hero-card">
+        <div className="intake-hero-header">
+          <button className="system-pill kb-link-btn" onClick={onOpenKB}>
+            <BookOpenIcon /> Browse Help Articles (25 Topics)
+          </button>
+          <span className="system-pill success">
+            <ShieldCheckIcon /> AI Support Ready
+          </span>
         </div>
-        <h1 className="welcome-hero-title">Customer Support Resolution Hub</h1>
-        <p className="welcome-hero-desc">
-          Select a common incident category below or type your inquiry into the chat to start an instant automated resolution grounded in our vector knowledge base.
+        <h1 className="intake-title">How can we help you today?</h1>
+        <p className="intake-subtitle">
+          Select a common topic below or type your question in the chat bar to get instant step-by-step help.
         </p>
-      </div>
 
-      {/* ── Metrics Grid ── */}
-      <div className="welcome-metrics-grid">
-        <div className="metric-card">
-          <span className="metric-icon">⚡</span>
-          <div className="metric-info">
-            <span className="metric-value">&lt; 1.2s</span>
-            <span className="metric-label">Avg Resolution Time</span>
-          </div>
-        </div>
-        <div className="metric-card">
-          <span className="metric-icon">🎯</span>
-          <div className="metric-info">
-            <span className="metric-value">100%</span>
-            <span className="metric-label">RCA Guardrail Checks</span>
-          </div>
-        </div>
-        <div className="metric-card">
-          <span className="metric-icon">📚</span>
-          <div className="metric-info">
-            <span className="metric-value">25 Articles</span>
-            <span className="metric-label">Vector Knowledge Index</span>
-          </div>
-        </div>
-        <div className="metric-card">
-          <span className="metric-icon">🤖</span>
-          <div className="metric-info">
-            <span className="metric-value">Gemini 2.0</span>
-            <span className="metric-label">Generative AI Engine</span>
-          </div>
+        {/* Search Bar */}
+        <div className="intake-search-wrapper">
+          <SearchIcon />
+          <input
+            type="text"
+            className="intake-search-input"
+            placeholder="Search help topics (e.g. login, payment, refund, delivery)..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          {searchQuery && (
+            <button className="clear-search-btn" onClick={() => setSearchQuery("")}>
+              <CloseIcon />
+            </button>
+          )}
         </div>
       </div>
 
-      {/* ── Knowledge Categories Grid ── */}
-      <div className="welcome-categories-header">
-        <span className="section-title">Common Resolution Scenarios</span>
-        <span className="section-subtitle">Click any sample query to launch a resolution</span>
+      {/* System Metrics Bar */}
+      <div className="metrics-bar">
+        <div className="metric-box">
+          <span className="metric-value">Instant</span>
+          <span className="metric-title">Automated Answers</span>
+        </div>
+        <div className="metric-box">
+          <span className="metric-value">Verified</span>
+          <span className="metric-title">Official Help Guides</span>
+        </div>
+        <div className="metric-box">
+          <span className="metric-value">24/7</span>
+          <span className="metric-title">Always Available</span>
+        </div>
+        <div className="metric-box">
+          <span className="metric-value">Human Help</span>
+          <span className="metric-title">Escalation Ready</span>
+        </div>
       </div>
 
-      <div className="welcome-category-grid">
-        {KNOWLEDGE_CATEGORIES.map((cat) => (
-          <div key={cat.id} className="category-card">
-            <div className="category-card-header">
-              <div className="category-icon-wrapper">{cat.icon}</div>
-              <div className="category-title-block">
-                <h3 className="category-title">{cat.title}</h3>
-                <p className="category-desc">{cat.desc}</p>
+      {/* Categories Grid */}
+      <div className="intake-section-title">
+        {searchQuery ? `Matching Topics (${filteredCategories.length})` : "Common Help Topics"}
+      </div>
+
+      <div className="categories-grid">
+        {filteredCategories.length === 0 ? (
+          <div className="no-matches-box">No topics matching &quot;{searchQuery}&quot;. Try typing your question in the message box below.</div>
+        ) : (
+          filteredCategories.map((cat) => (
+            <div key={cat.id} className="category-block">
+              <div className="category-block-header">
+                <div className="cat-icon">{cat.icon}</div>
+                <div className="cat-meta">
+                  <span className="cat-title">{cat.title}</span>
+                  <span className="cat-desc-text">{cat.desc}</span>
+                </div>
+              </div>
+              <div className="cat-issues-list">
+                {cat.issues.map((issue, idx) => (
+                  <button
+                    key={idx}
+                    className="cat-issue-btn"
+                    onClick={() => onQuickTicket(issue)}
+                  >
+                    <span className="issue-arrow">→</span> {issue}
+                  </button>
+                ))}
               </div>
             </div>
-            <div className="category-chips">
-              {cat.issues.map((issue, idx) => (
-                <button
-                  key={idx}
-                  className="category-chip-btn"
-                  onClick={() => onQuickIssue(issue)}
-                >
-                  <span className="chip-bullet">›</span> {issue}
-                </button>
-              ))}
-            </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );
 }
 
 /* ══════════════════════════════════════════════
-   MAIN APP
+   KNOWLEDGE BASE MODAL EXPLORER
    ══════════════════════════════════════════════ */
+function KnowledgeBaseModal({ onClose, onSelectArticle }) {
+  const [kbArticles, setKbArticles] = useState([]);
+  const [search, setSearch] = useState("");
 
-function createFreshConversation() {
-  return {
-    id: uid(),
-    title: "New Conversation",
-    createdAt: new Date().toISOString(),
-    step: "ask_name",
-    userName: "",
-    messages: [
-      {
-        role: "assistant",
-        content: "Hello! I'm your AI support assistant. What's your name?",
-      },
-    ],
-    resolutionData: null,
-  };
+  useEffect(() => {
+    setKbArticles([
+      { id: "kb-001", title: "Cannot Log In — Invalid Credentials", category: "login_issue", content: "Verify you are entering the correct email and password. Try clearing browser cache or resetting your password." },
+      { id: "kb-002", title: "Account Locked Due to Multiple Failed Login Attempts", category: "account_locked", content: "Accounts are temporarily locked for 15 minutes after 5 failed attempts for your security." },
+      { id: "kb-003", title: "Duplicate Charges on Payment Card", category: "payment_failed", content: "Duplicate pending charges usually drop off your bank statement within 3 to 5 business days automatically." },
+      { id: "kb-004", title: "Payment Failed But Bank Account Debited", category: "payment_failed", content: "Failed transactions are auto-reversed by your bank within 24 to 48 hours." },
+      { id: "kb-005", title: "Requesting a Refund for an Order", category: "refund_request", content: "Refunds can be requested within 30 days of purchase for eligible products." },
+      { id: "kb-006", title: "Order Delivery Delayed by Courier", category: "order_delay", content: "Logistics tracking updates sync every 24 hours as your shipment moves between regional hubs." },
+      { id: "kb-007", title: "Website 500 Internal Server Error", category: "technical_error", content: "Try refreshing the page or using a private browsing window. Our tech team monitors and fixes server outages." },
+      { id: "kb-008", title: "Resetting Forgotten Password via Email", category: "password_reset", content: "Enter your registered email on the password reset page to receive a 15-minute secure reset link." },
+    ]);
+  }, []);
+
+  const filtered = kbArticles.filter(
+    (a) =>
+      a.title.toLowerCase().includes(search.toLowerCase()) ||
+      a.content.toLowerCase().includes(search.toLowerCase()) ||
+      a.category.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="kb-modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="kb-modal-header">
+          <div className="kb-title-group">
+            <BookOpenIcon />
+            <h2>Help Center Articles</h2>
+            <span className="kb-count-tag">25 Articles</span>
+          </div>
+          <button className="modal-close-btn" onClick={onClose}><CloseIcon /></button>
+        </div>
+
+        <div className="kb-search-bar">
+          <SearchIcon />
+          <input
+            type="text"
+            placeholder="Search help articles (e.g. login, payment, refund)..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+
+        <div className="kb-articles-list">
+          {filtered.map((art) => (
+            <div key={art.id} className="kb-article-card">
+              <div className="kb-card-top">
+                <span className="kb-art-title">{art.title}</span>
+              </div>
+              <p className="kb-art-excerpt">{art.content}</p>
+              <button
+                className="kb-resolve-btn"
+                onClick={() => {
+                  onSelectArticle(art.title);
+                  onClose();
+                }}
+              >
+                Ask AI Agent About This Topic →
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 }
 
+/* ══════════════════════════════════════════════
+   MAIN APPLICATION COMPONENT
+   ══════════════════════════════════════════════ */
 function App() {
-  /* ── Conversation state ── */
   const [conversations, setConversations] = useState([]);
   const [activeConvId, setActiveConvId] = useState(null);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  /* ── Derived active conversation ── */
-  const activeConv = conversations.find((c) => c.id === activeConvId) || null;
-
-  /* ── Transient input state ── */
   const [currentInput, setCurrentInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [copiedId, setCopiedId] = useState(null);
+  const [feedback, setFeedback] = useState({});
+  const [showKBModal, setShowKBModal] = useState(false);
+  const [speakingMsgIndex, setSpeakingMsgIndex] = useState(null);
 
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
-  // Auto-scroll
+  const API_BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+
+  const activeConv = conversations.find((c) => c.id === activeConvId) || null;
+
+  // Auto scroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [activeConv?.messages, loading]);
 
-  // Auto-focus
-  useEffect(() => {
-    if (activeConv && activeConv.step !== "done") {
-      inputRef.current?.focus();
-    }
-  }, [activeConv?.step, activeConvId]);
-
-  /* ── Update a conversation in state ── */
   const updateConv = useCallback((id, updater) => {
     setConversations((prev) =>
       prev.map((c) => (c.id === id ? { ...c, ...updater(c) } : c))
     );
   }, []);
 
-  /* ── Create new conversation ── */
-  const handleNewConversation = useCallback(() => {
-    const conv = createFreshConversation();
-    setConversations((prev) => [conv, ...prev]);
-    setActiveConvId(conv.id);
-    setCurrentInput("");
-    setLoading(false);
-    setSidebarOpen(false);
-  }, []);
-
-  /* ── Switch conversation ── */
-  const handleSwitchConversation = useCallback((id) => {
-    setActiveConvId(id);
-    setCurrentInput("");
-    setLoading(false);
-    setSidebarOpen(false);
-  }, []);
-
-  /* ── Delete conversation ── */
-  const handleDeleteConversation = useCallback(
-    (id, e) => {
-      e.stopPropagation();
-      setConversations((prev) => prev.filter((c) => c.id !== id));
-      if (activeConvId === id) {
-        setActiveConvId(null);
-      }
-    },
-    [activeConvId]
-  );
-
-  /* ── Quick issue from welcome screen ── */
-  const handleQuickIssue = useCallback(
-    (issue) => {
-      // Create a conversation, set name to "Customer", jump to ask_issue, then auto-send
-      const conv = createFreshConversation();
-      conv.step = "ask_issue";
-      conv.userName = "Customer";
-      conv.title = issue.length > 35 ? issue.slice(0, 35) + "…" : issue;
-      conv.messages = [
+  const createNewTicket = useCallback(() => {
+    const ticketId = nextTicketId();
+    const newConv = {
+      id: ticketId,
+      title: ticketId,
+      createdAt: new Date().toISOString(),
+      step: "ask_name",
+      userName: "",
+      messages: [
         {
           role: "assistant",
-          content:
-            "Hello! I'm your AI support assistant. Let me look into that for you right away.",
+          content: "Hello! Welcome to Support. What is your name?",
         },
-        { role: "user", content: issue },
-      ];
-      setConversations((prev) => [conv, ...prev]);
-      setActiveConvId(conv.id);
-      setCurrentInput("");
-      setSidebarOpen(false);
+      ],
+      resolutionData: null,
+    };
+    setConversations((prev) => [newConv, ...prev]);
+    setActiveConvId(ticketId);
+    setCurrentInput("");
+  }, []);
 
-      // Fire the API call
-      sendIssueToBackend(conv.id, issue, "Customer");
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
-  );
-
-  /* ── Send issue to backend (extracted for reuse) ── */
   const sendIssueToBackend = async (convId, issueText, name) => {
     setLoading(true);
     try {
-      const response = await fetch("http://127.0.0.1:8000/resolve", {
+      const response = await fetch(`${API_BASE_URL}/resolve`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -472,7 +460,7 @@ function App() {
           ...c.messages,
           {
             role: "assistant",
-            content: data.response || "No response received.",
+            content: data.response || "I have processed your request.",
             meta: data,
           },
         ],
@@ -485,7 +473,7 @@ function App() {
           {
             role: "assistant",
             content:
-              "I'm unable to connect to the resolution service right now. Please ensure the backend server is running and try again.",
+              "We're having trouble connecting to the support server right now. Please ensure the backend is running and try again.",
           },
         ],
       }));
@@ -494,14 +482,78 @@ function App() {
     }
   };
 
-  /* ── Handle send ── */
+  const handleQuickTicket = useCallback((issueText) => {
+    const ticketId = nextTicketId();
+    const newConv = {
+      id: ticketId,
+      title: issueText.length > 28 ? issueText.slice(0, 28) + "..." : issueText,
+      createdAt: new Date().toISOString(),
+      step: "done",
+      userName: "Customer",
+      messages: [
+        {
+          role: "assistant",
+          content: "Hello! Checking our official help guides to assist you right away...",
+        },
+        { role: "user", content: issueText },
+      ],
+      resolutionData: null,
+    };
+    setConversations((prev) => [newConv, ...prev]);
+    setActiveConvId(ticketId);
+    sendIssueToBackend(ticketId, issueText, "Customer");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleCopy = (text, msgIdx) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(msgIdx);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleSpeak = (text, msgIdx) => {
+    if (!("speechSynthesis" in window)) return;
+    if (speakingMsgIndex === msgIdx) {
+      window.speechSynthesis.cancel();
+      setSpeakingMsgIndex(null);
+      return;
+    }
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.onend = () => setSpeakingMsgIndex(null);
+    setSpeakingMsgIndex(msgIdx);
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const handleExport = () => {
+    if (!activeConv) return;
+    const content = `================================================
+SUPPORT CHAT SUMMARY
+Reference: ${activeConv.id}
+Customer Name: ${activeConv.userName || "Customer"}
+Status: ${activeConv.resolutionData?.status === "resolved" ? "Solved" : "Escalated to Human Agent"}
+Date: ${new Date().toLocaleString()}
+================================================
+
+CHAT HISTORY:
+${activeConv.messages.map((m) => `[${m.role === "assistant" ? "AI Agent" : "Customer"}]: ${m.content}`).join("\n\n")}
+`;
+    const blob = new Blob([content], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Support_${activeConv.id}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const handleSend = async () => {
     if (!currentInput.trim() || loading || !activeConv) return;
     const value = currentInput.trim();
-    const convId = activeConv.id;
+    setCurrentInput("");
 
     if (activeConv.step === "ask_name") {
-      updateConv(convId, (c) => ({
+      updateConv(activeConv.id, (c) => ({
         step: "ask_issue",
         userName: value,
         title: `Chat with ${value}`,
@@ -510,218 +562,237 @@ function App() {
           { role: "user", content: value },
           {
             role: "assistant",
-            content: `Great to meet you, ${value}! How can I help you today? Please describe the issue you're experiencing.`,
+            content: `Nice to meet you, ${value}! How can we help you today?`,
           },
         ],
       }));
-      setCurrentInput("");
-      return;
-    }
-
-    if (activeConv.step === "ask_issue") {
-      // Update title to the issue text
-      const title =
-        value.length > 35 ? value.slice(0, 35) + "…" : value;
-      updateConv(convId, (c) => ({
-        title,
+    } else if (activeConv.step === "ask_issue") {
+      updateConv(activeConv.id, (c) => ({
+        step: "processing",
         messages: [...c.messages, { role: "user", content: value }],
       }));
-      setCurrentInput("");
-      await sendIssueToBackend(convId, value, activeConv.userName);
+      sendIssueToBackend(activeConv.id, value, activeConv.userName);
     }
   };
 
-  /* ── Computed values ── */
-  const step = activeConv?.step || null;
-  const messages = activeConv?.messages || [];
-
-  const getPlaceholder = () => {
-    if (!activeConv) return "Start a new conversation…";
-    if (step === "ask_name") return "Enter your name…";
-    if (step === "ask_issue") return "Describe your issue…";
-    return "Session ended";
-  };
-
-  const headerTitle = activeConv
-    ? activeConv.title
-    : "Customer Support";
-
   return (
-    <div className="app-layout">
-      {/* ── Sidebar overlay (mobile) ── */}
-      <div
-        className={`sidebar-overlay ${sidebarOpen ? "visible" : ""}`}
-        onClick={() => setSidebarOpen(false)}
-      />
+    <div className="workspace-container">
+      {/* ── KNOWLEDGE BASE MODAL ── */}
+      {showKBModal && (
+        <KnowledgeBaseModal
+          onClose={() => setShowKBModal(false)}
+          onSelectArticle={(title) => handleQuickTicket(title)}
+        />
+      )}
 
-      {/* ══════ SIDEBAR ══════ */}
-      <aside className={`sidebar ${sidebarOpen ? "open" : ""}`}>
-        {/* Branding */}
-        <div className="sidebar-header">
-          <div className="sidebar-logo"><HeadsetIcon /></div>
-          <div className="sidebar-brand">
-            <span className="sidebar-brand-name">SupportAI</span>
-            <span className="sidebar-brand-tag">Resolution Agent</span>
+      {/* ── SIDEBAR ── */}
+      <aside className="workspace-sidebar">
+        <div className="sidebar-brand">
+          <div className="brand-logo"><CpuIcon /></div>
+          <div className="brand-text">
+            <span className="brand-name">Help & Support</span>
+            <span className="brand-tag">24/7 AI Assistant</span>
           </div>
         </div>
 
-        {/* New conversation */}
-        <button className="new-conv-btn" onClick={handleNewConversation}>
-          <PlusIcon /> New Conversation
+        <button className="new-ticket-btn" onClick={createNewTicket}>
+          <PlusIcon /> Start New Chat
         </button>
 
-        {/* Conversation list */}
-        <span className="sidebar-section-label">Recent Chats</span>
-        <div className="conversation-list">
+        <button className="browse-kb-sidebar-btn" onClick={() => setShowKBModal(true)}>
+          <BookOpenIcon /> Browse Help Articles (25 Topics)
+        </button>
+
+        <div className="sidebar-section-header">Recent Chats ({conversations.length})</div>
+
+        <div className="tickets-list">
           {conversations.length === 0 ? (
-            <div className="conv-empty">
-              <div className="conv-empty-icon">💬</div>
-              <p className="conv-empty-text">
-                No conversations yet.<br />Start one above!
-              </p>
-            </div>
+            <div className="no-tickets-msg">No recent chats yet.</div>
           ) : (
-            conversations.map((conv) => (
-              <div
-                key={conv.id}
-                className={`conv-item ${conv.id === activeConvId ? "active" : ""}`}
-                onClick={() => handleSwitchConversation(conv.id)}
-              >
-                <span
-                  className={`conv-dot ${conv.step === "done" ? "ended" : "active"}`}
-                />
-                <div className="conv-info">
-                  <div className="conv-title">{conv.title}</div>
-                  <div className="conv-time">{formatTime(conv.createdAt)}</div>
-                </div>
-                <button
-                  className="conv-delete-btn"
-                  onClick={(e) => handleDeleteConversation(conv.id, e)}
-                  aria-label="Delete conversation"
+            conversations.map((c) => {
+              const isSelected = c.id === activeConvId;
+              const status = c.resolutionData?.status || (c.step === "done" ? "resolved" : "open");
+              return (
+                <div
+                  key={c.id}
+                  className={`ticket-nav-item ${isSelected ? "active" : ""}`}
+                  onClick={() => setActiveConvId(c.id)}
                 >
-                  <TrashIcon />
-                </button>
-              </div>
-            ))
+                  <div className="ticket-nav-top">
+                    <span className="ticket-nav-id">{c.title || c.id}</span>
+                    <span className={`status-tag ${status}`}>
+                      {status === "resolved" ? "Solved" : status === "escalated" ? "Escalated" : "Open"}
+                    </span>
+                  </div>
+                  <div className="ticket-nav-title">{c.userName ? `Customer: ${c.userName}` : "New Chat"}</div>
+                </div>
+              );
+            })
           )}
         </div>
 
-        {/* Quick actions */}
-        <span className="sidebar-section-label">Quick Actions</span>
-        <div className="quick-actions">
-          <button className="quick-action-btn" onClick={handleNewConversation}>
-            <span className="quick-action-icon">🆕</span> Start Fresh Chat
-          </button>
-          <button
-            className="quick-action-btn"
-            onClick={() => {
-              setConversations([]);
-              setActiveConvId(null);
-            }}
-          >
-            <span className="quick-action-icon">🗑️</span> Clear All History
-          </button>
-        </div>
-
-        {/* Footer */}
-        <div className="sidebar-footer">
-          <span className="sidebar-footer-text">
-            <span className="powered-dot" />
-            Powered by AI Resolution Engine
-          </span>
+        <div className="sidebar-footer-box">
+          <span className="connection-dot" />
+          AI Support Online
         </div>
       </aside>
 
-      {/* ══════ MAIN PANEL ══════ */}
-      <main className="main-panel">
-        {/* Header bar */}
-        <div className="main-header">
-          <div className="main-header-left">
-            <button
-              className="sidebar-toggle"
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              aria-label="Toggle sidebar"
-            >
-              <MenuIcon />
-            </button>
-            <span className="main-header-title">
-              {headerTitle}
-              {activeConv && activeConv.userName && (
-                <span className="main-header-subtitle">
-                  — {activeConv.userName}
-                </span>
-              )}
+      {/* ── MAIN WORKSPACE PANEL ── */}
+      <main className="workspace-main">
+        {/* Workspace Top Navigation Bar */}
+        <header className="workspace-topbar">
+          <div className="topbar-left">
+            <span className="topbar-title">
+              {activeConv ? activeConv.title : "Customer Support Help Center"}
             </span>
+            {activeConv?.userName && (
+              <span className="topbar-user-badge"><UserIcon /> {activeConv.userName}</span>
+            )}
           </div>
-          <div className="main-header-right">
-            <div className="header-status-pill">
-              <span className="status-dot" />
-              Online
-            </div>
+          <div className="topbar-right">
+            {activeConv && (
+              <button className="export-report-btn" onClick={handleExport} title="Save Chat Summary">
+                <DownloadIcon /> Save Summary
+              </button>
+            )}
+            {activeConv?.resolutionData && (
+              <>
+                <span className="meta-tag intent">
+                  Topic: {activeConv.resolutionData.predicted_intent?.replace("_", " ").toUpperCase()}
+                </span>
+                <span className="meta-tag conf">
+                  Confidence: {Math.round((activeConv.resolutionData.confidence || 0) * 100)}%
+                </span>
+              </>
+            )}
           </div>
-        </div>
+        </header>
 
-        {/* Chat content */}
-        <div className="chat-content">
-          {!activeConv ? (
-            /* ── Welcome / empty state ── */
-            <WelcomeState onQuickIssue={handleQuickIssue} />
-          ) : (
-            <>
-              {/* ── Messages ── */}
-              <div className="message-area">
-                {messages.map((msg, i) => (
-                  <div
-                    key={i}
-                    className={`message-row ${msg.role}`}
-                    style={{ animationDelay: `${Math.min(i * 0.06, 0.3)}s` }}
-                  >
-                    {msg.role === "assistant" && (
-                      <div className="msg-avatar"><HeadsetIcon /></div>
-                    )}
-                    <div className={`message-bubble ${msg.role}`}>
-                      {msg.content}
-                      {msg.meta && <ResolutionMeta data={msg.meta} />}
+        {/* Content View */}
+        {!activeConv ? (
+          <IntakeHub
+            onQuickTicket={handleQuickTicket}
+            onOpenKB={() => setShowKBModal(true)}
+          />
+        ) : (
+          <div className="ticket-view-container">
+            <div className="messages-scroll-area">
+              {activeConv.messages.map((msg, index) => (
+                <div key={index} className={`message-row ${msg.role}`}>
+                  <div className="msg-avatar">
+                    {msg.role === "assistant" ? <CpuIcon /> : <UserIcon />}
+                  </div>
+                  <div className="msg-content-wrapper">
+                    <div className="msg-header-info">
+                      <span className="msg-sender">
+                        {msg.role === "assistant" ? "AI Support Agent" : activeConv.userName || "Customer"}
+                      </span>
+                      <span className="msg-time">{formatTime(msg.timestamp)}</span>
+
+                      {/* Action Bar for Assistant Messages */}
+                      {msg.role === "assistant" && (
+                        <div className="msg-actions-bar">
+                          <button
+                            className="msg-action-btn"
+                            onClick={() => handleCopy(msg.content, index)}
+                            title="Copy text"
+                          >
+                            {copiedId === index ? <CheckIcon /> : <CopyIcon />}
+                            {copiedId === index ? "Copied" : "Copy"}
+                          </button>
+                          <button
+                            className={`msg-action-btn ${speakingMsgIndex === index ? "active" : ""}`}
+                            onClick={() => handleSpeak(msg.content, index)}
+                            title="Listen to response"
+                          >
+                            <SpeakerIcon />
+                            {speakingMsgIndex === index ? "Stop" : "Listen"}
+                          </button>
+                        </div>
+                      )}
                     </div>
+
+                    <div className="msg-bubble">{msg.content}</div>
+
+                    {/* Feedback Rating */}
+                    {msg.role === "assistant" && msg.meta && (
+                      <div className="msg-feedback-bar">
+                        <span className="feedback-label">Was this answer helpful?</span>
+                        <button
+                          className={`feedback-btn ${feedback[index] === "up" ? "selected-up" : ""}`}
+                          onClick={() => setFeedback((f) => ({ ...f, [index]: "up" }))}
+                        >
+                          <ThumbsUpIcon /> Yes
+                        </button>
+                        <button
+                          className={`feedback-btn ${feedback[index] === "down" ? "selected-down" : ""}`}
+                          onClick={() => setFeedback((f) => ({ ...f, [index]: "down" }))}
+                        >
+                          <ThumbsDownIcon /> I need human agent help
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Simple Source Reference Box */}
+                    {msg.meta && (
+                      <div className="rag-inspection-card">
+                        <div className="rag-card-header">
+                          <span className="rag-card-title"><DatabaseIcon /> RELEVANT OFFICIAL HELP ARTICLES</span>
+                          <span className="rag-tag">Verified Help Guide</span>
+                        </div>
+                        {msg.meta.retrieved_articles && msg.meta.retrieved_articles.length > 0 && (
+                          <div className="rag-articles-group">
+                            {msg.meta.retrieved_articles.map((art, i) => (
+                              <div key={i} className="rag-article-row">
+                                <span className="art-title">{art.title}</span>
+                                <span className="art-score">{Math.round((art.similarity || 0) * 100)}% Match</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
-                ))}
-
-                {loading && <TypingIndicator />}
-
-                {step === "done" && !loading && (
-                  <div className="new-chat-wrapper">
-                    <button className="new-chat-btn" onClick={handleNewConversation}>
-                      ✦ Start New Conversation
-                    </button>
+                </div>
+              ))}
+              {loading && (
+                <div className="message-row assistant">
+                  <div className="msg-avatar"><CpuIcon /></div>
+                  <div className="msg-bubble loading">
+                    Checking official help guides & preparing answer...
                   </div>
-                )}
+                </div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
 
-                <div ref={messagesEndRef} />
-              </div>
-
-              {/* ── Input ── */}
-              <div className="input-area">
+            {/* Input Bar */}
+            {activeConv.step !== "done" && (
+              <div className="workspace-input-bar">
                 <input
                   ref={inputRef}
-                  className="input-field"
+                  type="text"
+                  className="workspace-input"
+                  placeholder={
+                    activeConv.step === "ask_name"
+                      ? "Enter your name..."
+                      : "Type your question here..."
+                  }
                   value={currentInput}
                   onChange={(e) => setCurrentInput(e.target.value)}
-                  placeholder={getPlaceholder()}
-                  disabled={step === "done" || loading}
                   onKeyDown={(e) => e.key === "Enter" && handleSend()}
                 />
                 <button
                   className="send-btn"
                   onClick={handleSend}
-                  disabled={loading || step === "done"}
-                  aria-label="Send message"
+                  disabled={!currentInput.trim() || loading}
                 >
-                  <SendIcon />
+                  <SendIcon /> Send
                 </button>
               </div>
-            </>
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </main>
     </div>
   );

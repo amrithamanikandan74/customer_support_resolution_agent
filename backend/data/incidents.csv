@@ -2,23 +2,105 @@ text,intent
 I can't log in to my account,login_issue
 I am unable to sign in,login_issue
 Login is failing for my account,login_issue
+Cannot log in despite typing correct password,login_issue
+Invalid credentials error when logging in,login_issue
+Login button is non responsive on sign in page,login_issue
+Trouble signing in to user portal,login_issue
+System says wrong username or password,login_issue
+Login fails after recent browser update,login_issue
+I cannot sign into my profile,login_issue
+Unable to authenticate user login,login_issue
+Sign in page keeps reloading endlessly,login_issue
+Getting authentication failure on login,login_issue
+Can't sign in from my mobile app,login_issue
+Login screen won't accept my credentials,login_issue
 My password reset link is not working,password_reset
 Reset password email did not arrive,password_reset
 I did not receive the reset link,password_reset
+Forgot my password need link to reset,password_reset
+How do I change my forgotten password,password_reset
+Password reset link expired before I clicked it,password_reset
+Need assistance resetting my security password,password_reset
+Password reset email went to spam folder,password_reset
+Send password reset instructions to my email,password_reset
+I am locked out because I forgot my password,password_reset
+Reset token is invalid when trying to set new password,password_reset
+I want to update my account password,password_reset
+Forgot password link is not generating email,password_reset
+Where can I reset my account password,password_reset
+Password reset confirmation code not working,password_reset
 Payment failed but money got deducted,payment_failed
 Transaction failed and amount deducted,payment_failed
 My payment did not go through,payment_failed
+Credit card charged twice for single order,payment_failed
+Double payment deduction on my bank account,payment_failed
+Payment status says failed but card was charged,payment_failed
+Billing error money taken out twice,payment_failed
+Card debited but order confirmation failed,payment_failed
+Payment gateway timed out during checkout,payment_failed
+Money debited from credit card without order placement,payment_failed
+Payment rejected by gateway error code 402,payment_failed
+Charged twice for the same transaction,payment_failed
+Payment pending for over 24 hours,payment_failed
+Bank statement shows charge but order was canceled,payment_failed
+Card transaction failed on checkout page,payment_failed
 I want a refund for my order,refund_request
 I need my money back,refund_request
 Please refund my purchase,refund_request
+Requesting a full refund for defective item,refund_request
+How long does a refund take to process back to card,refund_request
+Cancel order and refund my money immediately,refund_request
+Returned item but refund not credited yet,refund_request
+I am requesting a partial refund for damaged delivery,refund_request
+Money back guarantee claim for order,refund_request
+Refund status check for canceled order,refund_request
+Issue refund to my original payment method,refund_request
+Want refund because item did not arrive as advertised,refund_request
+How do I request a refund for order 49201,refund_request
+Refund request submitted but no credit received,refund_request
+Please initiate refund process for my returned package,refund_request
 Where is my order,order_delay
 My delivery is late,order_delay
 Order has not arrived yet,order_delay
+Track my package delivery status,order_delay
+Shipping status hasn't updated in 5 days,order_delay
+Expected delivery date passed package not received,order_delay
+Package delayed by courier partner,order_delay
+When will my shipment arrive at my address,order_delay
+Order tracking number says in transit for a week,order_delay
+Late shipment delivery inquiry,order_delay
+My package delivery is significantly delayed,order_delay
+Tracking status shows delivered but package not here,order_delay
+Delayed order delivery update requested,order_delay
+Order status stuck on processing,order_delay
+Where is my shipment package,order_delay
 My account is locked,account_locked
 Account locked after too many attempts,account_locked
 I cannot access my account,account_locked
 Login blocked due to security,account_locked
 Locked out of my account,account_locked
+Account suspended due to suspicious login,account_locked
+Too many failed login attempts account blocked,account_locked
+Security lockout on my user account,account_locked
+How to unlock my locked user account,account_locked
+Access denied account locked by administrator,account_locked
+Temporarily blocked from signing in,account_locked
+Account disabled due to password attempts,account_locked
+Unlock my account access please,account_locked
+Security lock triggered on my profile,account_locked
+Account lockout timer countdown,account_locked
 The app is showing an unknown error,technical_error
 I am getting a 500 server error,technical_error
 The website crashed during checkout,technical_error
+Uncaught javascript error on page load,technical_error
+502 bad gateway error when opening website,technical_error
+App crashing constantly on startup,technical_error
+404 page not found error on checkout link,technical_error
+Internal server error code 500 occurred,technical_error
+Blank screen white output on website load,technical_error
+Database connection error on web app,technical_error
+Website throwing error 503 service unavailable,technical_error
+Infinite loading spinner bug on dashboard,technical_error
+Technical glitch preventing form submission,technical_error
+Application freeze crash report,technical_error
+API request failed with error code 500,technical_error

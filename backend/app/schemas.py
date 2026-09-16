@@ -16,6 +16,7 @@ class RetrievedArticle(BaseModel):
 class ResolutionResponse(BaseModel):
     status: str
     incident_text: str
+    user_name: str = "Customer"
     predicted_intent: str | None = None
     confidence: float | None = None
     knowledge_title: str | None = None

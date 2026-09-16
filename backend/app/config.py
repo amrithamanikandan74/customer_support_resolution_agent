@@ -12,7 +12,7 @@ INCIDENTS_FILE = DATA_DIR / "incidents.csv"
 KNOWLEDGE_BASE_FILE = DATA_DIR / "knowledge_base.json"
 MODEL_FILE = MODEL_DIR / "intent_model.pkl"
 
-CONFIDENCE_THRESHOLD = 0.30
+CONFIDENCE_THRESHOLD = 0.25
 
 # ── RAG Configuration ──
 CHROMA_DB_DIR = DATA_DIR / "chroma_db"
@@ -21,4 +21,4 @@ RAG_TOP_K = 3
 
 # ── Gemini Configuration ──
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-GEMINI_MODEL = "gemini-2.0-flash"
+GEMINI_MODEL = "gemini-1.5-flash"
