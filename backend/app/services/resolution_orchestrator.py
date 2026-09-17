@@ -195,11 +195,11 @@ class ResolutionOrchestrator:
         a = self.assess(incident_text, history, preferred_language)
 
         if a["is_greeting"]:
-            reply = self.response_generator.greet(user_name, a["language"])
+            reply, actual_language = self.response_generator.greet(user_name, a["language"])
             status = "resolved"
             knowledge_title = None
         elif a["escalation_reason"]:
-            reply = self.response_generator.generate_escalation(
+            reply, actual_language = self.response_generator.generate_escalation(
                 incident_text=incident_text,
                 confidence=a["confidence"],
                 user_name=user_name,
@@ -212,7 +212,7 @@ class ResolutionOrchestrator:
             status = "escalated"
             knowledge_title = None
         else:
-            reply = self.response_generator.generate(
+            reply, actual_language = self.response_generator.generate(
                 incident_text=incident_text,
                 intent=a["intent"],
                 retrieved_articles=a["articles"],
@@ -239,7 +239,10 @@ class ResolutionOrchestrator:
             "escalation_reason": a["escalation_reason"],
             "follow_up": a["is_follow_up"],
             "suggested_replies": [] if a["is_greeting"] else self._suggestions(status, a["intent"]),
-            "language": LANGUAGE_NAMES.get(a["language"], a["language"]),
+            # The language the reply actually landed in, not just the one
+            # requested — they can differ when Gemini isn't reachable and
+            # the offline fallback (English-only outside greet()) kicks in.
+            "language": LANGUAGE_NAMES.get(actual_language, actual_language),
         }
 
         store.log_resolution(result, conversation_id)

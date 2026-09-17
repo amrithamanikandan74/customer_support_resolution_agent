@@ -18,13 +18,16 @@ VOICE = f"""You are {AGENT_NAME}, a real person working on {AGENT_TEAM}. You are
 and you never describe yourself as one.
 
 How you write:
-- Like a competent colleague typing a message, not like a form letter.
-- Use contractions. Short sentences. Plain words.
+- Like a quick chat message, not a written statement or an email. Short.
+  Casual. The kind of thing you'd actually type into a chat window.
+- Use contractions. Short sentences — most replies are 2-4 sentences total,
+  not a formal breakdown of the situation.
 - Lead with the answer. The customer wants to know if they've lost money or
   lost their account — tell them that in the first line, then explain.
 - Say "I" and "you". Never "we regret to inform", "valued customer",
   "kindly", "please be advised", "at your earliest convenience",
-  "we apologise for the inconvenience", or "rest assured".
+  "we apologise for the inconvenience", "rest assured", "I understand your
+  concern", or any other line that sounds read off a script.
 - One apology at most, and only if something actually went wrong on our side.
   Don't apologise for the customer's own typo or for a normal bank delay.
 - Numbered steps only when there is genuinely more than one thing to do.
@@ -48,6 +51,20 @@ MOOD_NOTE = {
         "The customer is under time pressure or money is at stake. Front-load the single "
         "most useful fact, keep it tight, and be explicit about timing."
     ),
+}
+
+
+# Canned replies used when Gemini isn't reachable. Only languages listed here
+# actually get translated fallback text — any other language silently drops
+# to English, so callers must check the *returned* language, not just the
+# one they asked for. See generate()/stream()/generate_escalation()/greet(),
+# all of which now report what language they actually delivered.
+FALLBACK_GREETING = {
+    "en": "Hey {name} — what's going on?",
+    "hi": "Hi {name} — bataiye, kya dikkat aa rahi hai?",
+    "ml": "Hai {name} — എന്താണ് പ്രശ്നം?",
+    "es": "Hola {name} — ¿qué ha pasado?",
+    "fr": "Bonjour {name} — que se passe-t-il ?",
 }
 
 
@@ -112,11 +129,17 @@ WHAT THIS LOOKS LIKE: {intent.replace('_', ' ')}
 HELP ARTICLES YOU MAY USE:
 {self._articles_block(articles)}
 
-{"This is a follow-up. Don't greet them again and don't repeat what you already told them — answer the new question only." if is_follow_up else f"Open by using their name once, naturally, the way you would in a message to a colleague."}
+{"This is a follow-up. Don't greet them again and don't repeat what you already told them — answer the new question only." if is_follow_up else "Open by using their name once, naturally, the way you would in a message to a colleague."}
 
 Write only the message. No subject line, no notes, no mention of articles or confidence scores."""
 
     # ── Public API ─────────────────────────────────────────────────────
+    # Every method below returns (text, actual_language) — the language
+    # actually delivered, which is only ever a translated language when
+    # Gemini wrote the reply. The offline fallback is English-only except
+    # for greet(), which has a handful of canned translations; anything
+    # else that falls back reports "en" honestly rather than echoing back
+    # whatever the customer asked for.
 
     def generate(
         self,
@@ -128,16 +151,16 @@ Write only the message. No subject line, no notes, no mention of articles or con
         history: list[dict] | None = None,
         is_follow_up: bool = False,
         language: str = "en",
-    ) -> str:
+    ) -> tuple[str, str]:
         prompt = self._build(incident_text, intent, retrieved_articles,
                              user_name, mood, history or [], is_follow_up, language)
         if self.client:
             try:
                 r = self.client.models.generate_content(model=self.model, contents=prompt)
-                return r.text.strip()
+                return r.text.strip(), language
             except Exception as e:
                 print(f"[!] Gemini call failed: {e}. Using the local fallback.")
-        return self._fallback(incident_text, retrieved_articles, user_name, is_follow_up)
+        return self._fallback(incident_text, retrieved_articles, user_name, is_follow_up), "en"
 
     def stream(
         self,
@@ -149,20 +172,41 @@ Write only the message. No subject line, no notes, no mention of articles or con
         history: list[dict] | None = None,
         is_follow_up: bool = False,
         language: str = "en",
+        report: dict | None = None,
     ) -> Iterator[str]:
-        """Yield the reply in chunks so the customer isn't watching a blank screen."""
+        """
+        Yield the reply in chunks so the customer isn't watching a blank screen.
+
+        `report`, if given, is filled in with {"language": <actual code>} once
+        the generator finishes — the caller can't get a return value out of a
+        generator any other way, and it needs to know whether the stream
+        actually landed in the requested language or fell back to English.
+        """
+        if report is None:
+            report = {}
         prompt = self._build(incident_text, intent, retrieved_articles,
                              user_name, mood, history or [], is_follow_up, language)
         if self.client:
+            sent_any = False
             try:
                 for chunk in self.client.models.generate_content_stream(
                     model=self.model, contents=prompt
                 ):
                     if getattr(chunk, "text", None):
+                        sent_any = True
                         yield chunk.text
+                report["language"] = language
                 return
             except Exception as e:
                 print(f"[!] Gemini stream failed: {e}. Using the local fallback.")
+                if sent_any:
+                    # We already streamed part of a real (Gemini) reply to the
+                    # customer. Appending the canned English fallback here
+                    # would glue mismatched text onto the end of it — stop
+                    # instead of making it worse.
+                    report["language"] = language
+                    return
+        report["language"] = "en"
         yield self._fallback(incident_text, retrieved_articles, user_name, is_follow_up)
 
     def generate_escalation(
@@ -175,7 +219,7 @@ Write only the message. No subject line, no notes, no mention of articles or con
         mood: str = "calm",
         history: list[dict] | None = None,
         language: str = "en",
-    ) -> str:
+    ) -> tuple[str, str]:
         nearby = ""
         if retrieved_articles:
             nearby = "\n".join(f"- {a['title']} ({a['similarity']:.0%})" for a in retrieved_articles)
@@ -199,8 +243,9 @@ SITUATION: {why}, so this needs a human colleague.
 CLOSEST ARTICLES (may not be relevant):
 {nearby or "(nothing close)"}
 
-Write a short message (three or four sentences) that:
-- says honestly that you don't want to guess at this one
+Write a short message (two or three sentences, like a quick chat reply, not
+a formal explanation) that:
+- says plainly you don't want to guess at this one
 - does NOT pretend to solve it, and does not repeat generic troubleshooting
 - tells them a colleague is picking it up
 - asks for the one piece of information that would help the colleague most,
@@ -211,19 +256,17 @@ Write only the message."""
         if self.client:
             try:
                 r = self.client.models.generate_content(model=self.model, contents=prompt)
-                return r.text.strip()
+                return r.text.strip(), language
             except Exception as e:
                 print(f"[!] Gemini call failed: {e}. Using the local fallback.")
 
         return (
-            f"{user_name}, I'd rather not guess at this one — I'm not confident enough that "
-            f"I've understood it correctly, and a wrong answer here would waste your time.\n\n"
-            f"I'm passing it to a colleague who handles these directly. If you can add any "
-            f"detail — when it started, and anything you've already tried — it'll save them "
-            f"a round trip."
-        )
+            f"Hmm, I'm not sure enough about this one to risk a wrong answer, {user_name}. "
+            f"I'll get a colleague on it — if you can say when it started and what "
+            f"you've already tried, that'll help them jump straight in."
+        ), "en"
 
-    def greet(self, user_name: str, language: str = "en") -> str:
+    def greet(self, user_name: str, language: str = "en") -> tuple[str, str]:
         """A bare 'hi' isn't an issue — answer it like a person would."""
         prompt = f"""{VOICE}
 
@@ -239,18 +282,13 @@ the message."""
         if self.client:
             try:
                 r = self.client.models.generate_content(model=self.model, contents=prompt)
-                return r.text.strip()
+                return r.text.strip(), language
             except Exception as e:
                 print(f"[!] Gemini call failed: {e}. Using the local fallback.")
 
-        FALLBACK_GREETING = {
-            "en": f"Hey {user_name} — what's going on?",
-            "hi": f"Hi {user_name} — bataiye, kya dikkat aa rahi hai?",
-            "ml": f"Hai {user_name} — enthാണ് പ്രശ്നം?",
-            "es": f"Hola {user_name} — ¿qué ha pasado?",
-            "fr": f"Bonjour {user_name} — que se passe-t-il ?",
-        }
-        return FALLBACK_GREETING.get(language, FALLBACK_GREETING["en"])
+        if language in FALLBACK_GREETING:
+            return FALLBACK_GREETING[language].format(name=user_name), language
+        return FALLBACK_GREETING["en"].format(name=user_name), "en"
 
     # ── Offline fallback ───────────────────────────────────────────────
 
@@ -259,8 +297,8 @@ the message."""
         top = articles[0] if articles else None
         if not top:
             return (
-                f"{user_name}, I've got your message but nothing in our help articles covers "
-                f"it, so I don't want to guess. Let me get a colleague to look."
+                f"Hmm, I don't have anything on that in our help docs, {user_name} — "
+                f"don't want to guess wrong, so let me get someone to take a look."
             )
-        opener = "" if is_follow_up else f"{user_name} — here's where that stands.\n\n"
-        return f"{opener}{top['content']}\n\nDoes that match what you're seeing?"
+        opener = "" if is_follow_up else f"Hey {user_name}, here's what I've got:\n\n"
+        return f"{opener}{top['content']}\n\nDoes that sound like what's happening?"

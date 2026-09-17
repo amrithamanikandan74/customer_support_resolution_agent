@@ -91,8 +91,13 @@ def resolve_incident_stream(request: IncidentRequest):
         a = orchestrator.assess(text, history, preferred_language)
         status = "escalated" if (not a["is_greeting"] and a["escalation_reason"]) else "resolved"
         articles = orchestrator._summarise(a["articles"])
-        language_name = LANGUAGE_NAMES.get(a["language"], a["language"])
 
+        # NOTE: this initial meta event is sent before the reply is generated,
+        # so it deliberately omits "language" — the requested language isn't
+        # necessarily the one that gets delivered (Gemini may be unreachable,
+        # in which case the offline fallback answers in English regardless of
+        # what was asked for). The authoritative language comes back with the
+        # "done" event below, once generation has actually happened.
         meta = {
             "status": status,
             "predicted_intent": a["intent"],
@@ -103,17 +108,16 @@ def resolve_incident_stream(request: IncidentRequest):
             "escalation_reason": a["escalation_reason"],
             "follow_up": a["is_follow_up"],
             "suggested_replies": [] if a["is_greeting"] else orchestrator._suggestions(status, a["intent"]),
-            "language": language_name,
         }
         yield f"event: meta\ndata: {json.dumps(meta)}\n\n"
 
         parts: list[str] = []
         if a["is_greeting"]:
-            reply = orchestrator.response_generator.greet(user_name, a["language"])
+            reply, actual_language = orchestrator.response_generator.greet(user_name, a["language"])
             parts.append(reply)
             yield f"event: token\ndata: {json.dumps(reply)}\n\n"
         elif status == "escalated":
-            reply = orchestrator.response_generator.generate_escalation(
+            reply, actual_language = orchestrator.response_generator.generate_escalation(
                 incident_text=text,
                 confidence=a["confidence"],
                 user_name=user_name,
@@ -126,6 +130,7 @@ def resolve_incident_stream(request: IncidentRequest):
             parts.append(reply)
             yield f"event: token\ndata: {json.dumps(reply)}\n\n"
         else:
+            report: dict = {}
             for chunk in orchestrator.response_generator.stream(
                 incident_text=text,
                 intent=a["intent"],
@@ -135,20 +140,24 @@ def resolve_incident_stream(request: IncidentRequest):
                 history=history,
                 is_follow_up=a["is_follow_up"],
                 language=a["language"],
+                report=report,
             ):
                 parts.append(chunk)
                 yield f"event: token\ndata: {json.dumps(chunk)}\n\n"
+            actual_language = report.get("language", "en")
 
         full = "".join(parts).strip()
+        language_name = LANGUAGE_NAMES.get(actual_language, actual_language)
         result = {
             **meta,
             "incident_text": text,
             "user_name": user_name,
             "response": full,
             "rag_enabled": True,
+            "language": language_name,
         }
         store.log_resolution(result, request.conversation_id or "")
-        yield f"event: done\ndata: {json.dumps({'response': full})}\n\n"
+        yield f"event: done\ndata: {json.dumps({'response': full, 'language': language_name})}\n\n"
 
     return StreamingResponse(
         events(),

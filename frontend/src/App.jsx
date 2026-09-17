@@ -223,7 +223,7 @@ function Inspector({ data, onClose }) {
       <p className="insp-lede">
         {out ? (REASON[data.escalation_reason] || "This one needed a person.")
              : "Every step I took, and the articles I leaned on."}
-        {data.language && data.language !== "English" ? ` Replying in ${data.language}.` : ""}
+        {data.language && data.language !== "English" ? ` Replied in ${data.language}.` : ""}
       </p>
 
       <div className="insp-block">
@@ -540,7 +540,15 @@ export default function App() {
           } else if (kind === "token") {
             put((t) => ({ ...t, text: t.text + payload }));
           } else if (kind === "done") {
-            put((t) => ({ ...t, text: payload.response || t.text, streaming: false }));
+            // The requested language may not be what actually came back
+            // (e.g. it falls back to English when Gemini isn't reachable),
+            // so "language" only arrives now, once generation is done.
+            put((t) => ({
+              ...t,
+              text: payload.response || t.text,
+              streaming: false,
+              meta: t.meta ? { ...t.meta, language: payload.language } : t.meta,
+            }));
           }
         }
       }
@@ -745,7 +753,11 @@ export default function App() {
 
                 return (
                   <div className="turn is-agent" key={key}>
-                    <div className="turn-who">{AGENT} · {clock(t.at)}</div>
+                    <div className="turn-who">
+                      {AGENT} · {clock(t.at)}
+                      {!t.streaming && t.meta?.language && t.meta.language !== "English"
+                        ? ` · Replied in ${t.meta.language}` : ""}
+                    </div>
                     <div className="turn-body">
                       {t.text}
                       {t.streaming && <span className="caret" />}
