@@ -27,6 +27,8 @@ RCA_RULES = {
     "technical_error": ["error", "crash", "crashed", "server", "500", "404", "bug", "broken", "won't load"],
     "subscription": ["subscription", "subscribe", "plan", "renew", "renewal", "auto-renew",
                      "cancel", "downgrade", "upgrade", "billing cycle", "monthly", "yearly"],
+    "shipping_address_change": ["address", "deliver to", "shipping address", "pin code", "pincode",
+                                 "zip code", "wrong address", "redirect", "moved", "relocate"],
 }
 
 FRUSTRATION = [
@@ -180,6 +182,7 @@ class ResolutionOrchestrator:
             "password_reset": ["The email never arrived", "The link had expired"],
             "technical_error": ["It's still happening", "It works on my phone"],
             "subscription": ["I want a refund instead", "How do I switch plans?"],
+            "shipping_address_change": ["It's already been dispatched", "How do I update my saved address?"],
         }.get(intent, ["That's sorted it, thanks", "That didn't work"])
 
     # ── Main entry point ───────────────────────────────────────────────

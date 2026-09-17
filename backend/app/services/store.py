@@ -12,9 +12,9 @@ import threading
 from datetime import datetime, timezone
 from pathlib import Path
 
-from app.config import LOG_DIR
+from filelock import FileLock
 
-_lock = threading.Lock()
+from app.config import LOG_DIR
 
 RESOLUTIONS = LOG_DIR / "resolutions.csv"
 FEEDBACK = LOG_DIR / "feedback.csv"
@@ -30,6 +30,29 @@ _HEADERS = {
     TICKETS: ["at", "ticket_ref", "user_name", "email", "priority", "intent", "incident_text", "state"],
 }
 
+# One FileLock per CSV. A plain threading.Lock only ever serialized writes
+# within a single Python process — fine for `uvicorn` with one worker, but
+# it does nothing if you run `uvicorn --workers N`, a process manager that
+# forks, or more than one instance behind a load balancer, since each
+# process gets its own copy of the lock. filelock.FileLock instead takes an
+# OS-level lock on a sidecar `.lock` file (fcntl/flock on POSIX, msvcrt on
+# Windows), so it serializes writers across processes too, and it keeps an
+# internal threading.Lock as well so it's still safe across threads in one
+# process. Locks are cached per path so repeated calls reuse the same
+# FileLock object instead of creating a new one every time.
+_locks: dict[Path, FileLock] = {}
+_locks_guard = threading.Lock()
+
+
+def _lock_for(path: Path) -> FileLock:
+    with _locks_guard:
+        lock = _locks.get(path)
+        if lock is None:
+            LOG_DIR.mkdir(parents=True, exist_ok=True)
+            lock = FileLock(str(path) + ".lock")
+            _locks[path] = lock
+        return lock
+
 
 def _ensure(path: Path):
     LOG_DIR.mkdir(parents=True, exist_ok=True)
@@ -39,7 +62,7 @@ def _ensure(path: Path):
 
 
 def _append(path: Path, row: dict):
-    with _lock:
+    with _lock_for(path):
         _ensure(path)
         with path.open("a", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=_HEADERS[path], extrasaction="ignore")
@@ -47,7 +70,7 @@ def _append(path: Path, row: dict):
 
 
 def _read(path: Path) -> list[dict]:
-    with _lock:
+    with _lock_for(path):
         if not path.exists():
             return []
         with path.open("r", newline="", encoding="utf-8") as f:
@@ -99,8 +122,10 @@ def create_ticket(user_name: str, email: str, priority: str,
     appending as two separate locked operations (the old next_ticket_ref +
     log_ticket pair) left a window where two concurrent requests could both
     read the same count and hand out the same reference — this closes it.
+    Using _lock_for(TICKETS) here also means that window is closed across
+    processes, not just across threads in one process.
     """
-    with _lock:
+    with _lock_for(TICKETS):
         _ensure(TICKETS)
         with TICKETS.open("r", newline="", encoding="utf-8") as f:
             existing = list(csv.DictReader(f))

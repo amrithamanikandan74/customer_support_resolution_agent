@@ -119,3 +119,18 @@ My subscription is still active after I cancelled it,subscription
 I need to pause my subscription for a while,subscription
 Does cancelling my plan happen immediately or at the end of the cycle,subscription
 I was billed twice for the same subscription period,subscription
+I need to change my delivery address for order #4521,shipping_address_change
+Can I update the shipping address before it ships?,shipping_address_change
+I entered the wrong address at checkout please fix it,shipping_address_change
+How do I change my delivery address after placing an order?,shipping_address_change
+My package is going to my old address can you update it?,shipping_address_change
+Please update the shipping address on my recent order,shipping_address_change
+I moved and need to change where my order is delivered,shipping_address_change
+Can you redirect my package to a new address?,shipping_address_change
+I want to update my address before the order is dispatched,shipping_address_change
+The delivery address on my order is wrong,shipping_address_change
+I need to correct my shipping address,shipping_address_change
+Is it possible to edit the address for an order already placed?,shipping_address_change
+I gave the wrong pin code can it be corrected?,shipping_address_change
+Change the recipient address for my last order,shipping_address_change
+I'd like to update my saved address for this delivery,shipping_address_change

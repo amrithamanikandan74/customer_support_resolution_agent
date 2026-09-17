@@ -148,5 +148,23 @@
     "category": "subscription",
     "title": "Unexpected Subscription Charge",
     "content": "If you see an unexpected subscription charge, it may be due to an auto-renewal of your plan. Check your subscription settings to see if auto-renewal is enabled. If you cancelled your subscription but were still charged, ensure the cancellation was confirmed — you should have received a cancellation confirmation email. If the charge was made in error, contact support within 48 hours for a full refund."
+  },
+  {
+    "id": "kb-026",
+    "category": "shipping_address_change",
+    "title": "Changing Your Delivery Address Before Dispatch",
+    "content": "If your order hasn't been dispatched yet, you can update the delivery address from Order History by selecting the order and choosing 'Edit delivery address'. Once an order moves to 'Preparing for dispatch' or later, the address is locked and can no longer be changed automatically — see the next article for what to do in that case."
+  },
+  {
+    "id": "kb-027",
+    "category": "shipping_address_change",
+    "title": "Order Already Dispatched to the Wrong Address",
+    "content": "If an order has already been dispatched and the address is wrong, we cannot redirect it in transit. Contact the courier directly using the tracking link in your dispatch email — many couriers support an address correction or hold-for-pickup request from their side. If the package is returned to us as undeliverable, it will be reshipped to the corrected address at no extra cost once it's back in our warehouse."
+  },
+  {
+    "id": "kb-028",
+    "category": "shipping_address_change",
+    "title": "Updating Your Saved Default Address",
+    "content": "Your saved default address (used to prefill future checkouts) is separate from the delivery address on an order you've already placed. Update it under Account Settings → Addresses. Changing it here does not affect orders already in progress — those need to be edited individually while they're still eligible, as described in 'Changing Your Delivery Address Before Dispatch'."
   }
 ]

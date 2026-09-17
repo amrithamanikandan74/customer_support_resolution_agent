@@ -11,7 +11,7 @@ class Turn(BaseModel):
 
 class IncidentRequest(BaseModel):
     incident_text: str = Field(..., min_length=3, max_length=4000)
-    user_name: Optional[str] = "Customer"
+    user_name: Optional[str] = Field("Customer", max_length=100)
     conversation_id: Optional[str] = ""
     preferred_language: Optional[str] = "auto"
     language: Optional[str] = "English"
@@ -71,7 +71,7 @@ class Ack(BaseModel):
 # ── Escalation ─────────────────────────────────────────────────────────
 
 class EscalationRequest(BaseModel):
-    user_name: str = "Customer"
+    user_name: str = Field("Customer", max_length=100)
     email: EmailStr
     incident_text: str = Field(..., min_length=3)
     predicted_intent: Optional[str] = ""
