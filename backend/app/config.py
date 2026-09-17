@@ -32,3 +32,25 @@ GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
 # Support feels human when it comes from someone, not from "the system".
 AGENT_NAME = os.getenv("AGENT_NAME", "Maya")
 AGENT_TEAM = os.getenv("AGENT_TEAM", "the support desk")
+
+# ── Languages ──
+# "auto" means: reply in whatever language the customer wrote in.
+# Anything else pins the reply to that language regardless of input.
+SUPPORTED_LANGUAGES = [
+    {"code": "auto", "name": "Match my message"},
+    {"code": "en", "name": "English"},
+    {"code": "hi", "name": "Hindi"},
+    {"code": "ml", "name": "Malayalam"},
+    {"code": "ta", "name": "Tamil"},
+    {"code": "te", "name": "Telugu"},
+    {"code": "kn", "name": "Kannada"},
+    {"code": "bn", "name": "Bengali"},
+    {"code": "mr", "name": "Marathi"},
+    {"code": "gu", "name": "Gujarati"},
+    {"code": "pa", "name": "Punjabi"},
+    {"code": "ur", "name": "Urdu"},
+    {"code": "es", "name": "Spanish"},
+    {"code": "fr", "name": "French"},
+    {"code": "ar", "name": "Arabic"},
+]
+LANGUAGE_NAMES = {l["code"]: l["name"] for l in SUPPORTED_LANGUAGES}

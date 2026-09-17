@@ -1,8 +1,17 @@
-from app.config import CONFIDENCE_THRESHOLD, MIN_ARTICLE_SIMILARITY
+import re
+
+from app.config import CONFIDENCE_THRESHOLD, LANGUAGE_NAMES, MIN_ARTICLE_SIMILARITY
 from app.services import store
 from app.services.intent_classifier import IntentClassifier
 from app.services.rag_retriever import RAGRetriever
 from app.services.response_generator import ResponseGenerator
+
+try:
+    from langdetect import DetectorFactory, detect
+    DetectorFactory.seed = 0  # deterministic — same text always detects the same way
+    _HAS_LANGDETECT = True
+except ImportError:
+    _HAS_LANGDETECT = False
 
 
 # Wording the classifier's label should be backed up by. An intent that
@@ -16,6 +25,8 @@ RCA_RULES = {
     "order_delay": ["order", "delivery", "deliver", "shipping", "parcel", "package", "late", "tracking"],
     "account_locked": ["lock", "locked", "blocked", "suspended", "disabled"],
     "technical_error": ["error", "crash", "crashed", "server", "500", "404", "bug", "broken", "won't load"],
+    "subscription": ["subscription", "subscribe", "plan", "renew", "renewal", "auto-renew",
+                     "cancel", "downgrade", "upgrade", "billing cycle", "monthly", "yearly"],
 }
 
 FRUSTRATION = [
@@ -28,6 +39,38 @@ URGENCY = [
     "urgent", "asap", "immediately", "today", "right now", "emergency",
     "deadline", "flight", "tomorrow morning", "need this fixed", "stranded",
 ]
+
+
+# A message this short and this plain isn't an issue to diagnose — it's someone
+# saying hello. Answering it warmly instead of running it through the RCA
+# pipeline stops "hi" or "hlo" from being escalated for having no content.
+SMALL_TALK_WORDS = {
+    "hi", "hii", "hiii", "hiya", "hey", "heya", "hello", "helo", "hllo", "hlo",
+    "yo", "sup", "namaste", "vanakkam", "salaam", "hola", "bonjour",
+    "test", "testing", "ok", "okay", "thanks", "thank", "you",
+}
+
+
+def is_small_talk(text: str) -> bool:
+    t = re.sub(r"[!.?,]+$", "", text.strip().lower())
+    if not t:
+        return False
+    words = t.split()
+    return len(words) <= 3 and all(w in SMALL_TALK_WORDS for w in words)
+
+
+def detect_language(text: str, preferred: str = "auto") -> str:
+    """Return an ISO code. 'preferred' pins the reply; otherwise guess from the text."""
+    if preferred and preferred != "auto":
+        return preferred
+    if not _HAS_LANGDETECT or len(text.strip()) < 4:
+        return "en"
+    try:
+        code = detect(text)
+        # langdetect's "zh-cn" etc. — keep only what we actually list, else fall back
+        return code if code in LANGUAGE_NAMES else code.split("-")[0] if code.split("-")[0] in LANGUAGE_NAMES else "en"
+    except Exception:
+        return "en"
 
 
 def read_mood(text: str) -> str:
@@ -67,7 +110,17 @@ class ResolutionOrchestrator:
 
     # ── Shared pipeline up to the point of writing a reply ─────────────
 
-    def assess(self, incident_text: str, history: list[dict] | None = None) -> dict:
+    def assess(self, incident_text: str, history: list[dict] | None = None,
+               preferred_language: str = "auto") -> dict:
+        language = detect_language(incident_text, preferred_language)
+
+        if not history and is_small_talk(incident_text):
+            return {
+                "intent": "greeting", "confidence": 1.0, "articles": [],
+                "mood": "calm", "escalation_reason": None, "is_follow_up": False,
+                "is_greeting": True, "language": language,
+            }
+
         intent_result = self.intent_classifier.predict(incident_text)
         intent = intent_result["intent"]
         confidence = intent_result["confidence"]
@@ -98,6 +151,8 @@ class ResolutionOrchestrator:
             "mood": read_mood(incident_text),
             "escalation_reason": reason,
             "is_follow_up": bool(history),
+            "is_greeting": False,
+            "language": language,
         }
 
     @staticmethod
@@ -124,6 +179,7 @@ class ResolutionOrchestrator:
             "account_locked": ["It's still locked", "I didn't try to log in"],
             "password_reset": ["The email never arrived", "The link had expired"],
             "technical_error": ["It's still happening", "It works on my phone"],
+            "subscription": ["I want a refund instead", "How do I switch plans?"],
         }.get(intent, ["That's sorted it, thanks", "That didn't work"])
 
     # ── Main entry point ───────────────────────────────────────────────
@@ -134,11 +190,15 @@ class ResolutionOrchestrator:
         user_name: str,
         history: list[dict] | None = None,
         conversation_id: str = "",
-        language: str = "English",
+        preferred_language: str = "auto",
     ) -> dict:
-        a = self.assess(incident_text, history)
+        a = self.assess(incident_text, history, preferred_language)
 
-        if a["escalation_reason"]:
+        if a["is_greeting"]:
+            reply = self.response_generator.greet(user_name, a["language"])
+            status = "resolved"
+            knowledge_title = None
+        elif a["escalation_reason"]:
             reply = self.response_generator.generate_escalation(
                 incident_text=incident_text,
                 confidence=a["confidence"],
@@ -147,7 +207,7 @@ class ResolutionOrchestrator:
                 reason=a["escalation_reason"],
                 mood=a["mood"],
                 history=history,
-                language=language,
+                language=a["language"],
             )
             status = "escalated"
             knowledge_title = None
@@ -160,7 +220,7 @@ class ResolutionOrchestrator:
                 mood=a["mood"],
                 history=history,
                 is_follow_up=a["is_follow_up"],
-                language=language,
+                language=a["language"],
             )
             status = "resolved"
             knowledge_title = a["articles"][0]["title"] if a["articles"] else None
@@ -169,7 +229,6 @@ class ResolutionOrchestrator:
             "status": status,
             "incident_text": incident_text,
             "user_name": user_name,
-            "language": language,
             "predicted_intent": a["intent"],
             "confidence": a["confidence"],
             "knowledge_title": knowledge_title,
@@ -179,7 +238,8 @@ class ResolutionOrchestrator:
             "mood": a["mood"],
             "escalation_reason": a["escalation_reason"],
             "follow_up": a["is_follow_up"],
-            "suggested_replies": self._suggestions(status, a["intent"]),
+            "suggested_replies": [] if a["is_greeting"] else self._suggestions(status, a["intent"]),
+            "language": LANGUAGE_NAMES.get(a["language"], a["language"]),
         }
 
         store.log_resolution(result, conversation_id)

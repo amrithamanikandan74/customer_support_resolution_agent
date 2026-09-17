@@ -12,6 +12,10 @@ class IntentClassifier:
         self.model = None
         self._load_or_train()
 
+    def train(self):
+        """Public entry point — regenerate the model from backend/data/incidents.csv."""
+        self._train_model()
+
     def _train_model(self):
         df = pd.read_csv(INCIDENTS_FILE)
 

@@ -23,7 +23,8 @@ TICKETS = LOG_DIR / "tickets.csv"
 _HEADERS = {
     RESOLUTIONS: [
         "at", "conversation_id", "user_name", "incident_text", "status",
-        "intent", "confidence", "top_article", "top_similarity", "mood", "escalation_reason",
+        "intent", "confidence", "top_article", "top_similarity", "mood",
+        "escalation_reason", "language",
     ],
     FEEDBACK: ["at", "conversation_id", "helpful", "intent", "confidence", "comment"],
     TICKETS: ["at", "ticket_ref", "user_name", "email", "priority", "intent", "incident_text", "state"],
@@ -74,6 +75,7 @@ def log_resolution(result: dict, conversation_id: str = ""):
         "top_similarity": top.get("similarity", ""),
         "mood": result.get("mood", ""),
         "escalation_reason": result.get("escalation_reason") or "",
+        "language": result.get("language", ""),
     })
 
 

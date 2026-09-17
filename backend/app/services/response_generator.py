@@ -11,7 +11,7 @@ from collections.abc import Iterator
 
 from google import genai
 
-from app.config import AGENT_NAME, AGENT_TEAM, GEMINI_API_KEY, GEMINI_MODEL
+from app.config import AGENT_NAME, AGENT_TEAM, GEMINI_API_KEY, GEMINI_MODEL, LANGUAGE_NAMES
 
 
 VOICE = f"""You are {AGENT_NAME}, a real person working on {AGENT_TEAM}. You are not a bot
@@ -32,9 +32,6 @@ How you write:
 - No sign-off block, no "Best regards", no ticket numbers unless given one.
 - End with one specific question or offer, not "let us know if you need
   anything else".
-- Reply in the same language the customer wrote in. If they wrote in
-  Malayalam, Hindi or Hinglish, answer in that, naturally, not translated.
-
 Hard rule: every factual claim must come from the help articles provided.
 If the articles don't cover something the customer asked, say plainly that
 you don't have that detail and that you'll get it checked — never invent
@@ -82,6 +79,16 @@ class ResponseGenerator:
         )
 
     @staticmethod
+    def _language_line(language: str) -> str:
+        name = LANGUAGE_NAMES.get(language, language)
+        if language == "en":
+            return "Write the reply in English."
+        return (
+            f"Write the entire reply in {name}, naturally, the way a native speaker "
+            f"would type a quick message — not a stiff or literal translation."
+        )
+
+    @staticmethod
     def _history_block(history: list[dict]) -> str:
         if not history:
             return ""
@@ -91,11 +98,12 @@ class ResponseGenerator:
         )
         return f"\nEARLIER IN THIS CONVERSATION:\n{lines}\n"
 
-    def _build(self, incident_text, intent, articles, user_name, mood, history, is_follow_up, language="English"):
-        lang_note = f"\nTARGET LANGUAGE: Write your response entirely in {language}." if language and language != "English" else ""
+    def _build(self, incident_text, intent, articles, user_name, mood, history, is_follow_up, language="en"):
         return f"""{VOICE}
 
-{MOOD_NOTE.get(mood, MOOD_NOTE["calm"])}{lang_note}
+{MOOD_NOTE.get(mood, MOOD_NOTE["calm"])}
+
+{self._language_line(language)}
 
 CUSTOMER: {user_name}
 WHAT THEY JUST SAID: {incident_text}
@@ -119,7 +127,7 @@ Write only the message. No subject line, no notes, no mention of articles or con
         mood: str = "calm",
         history: list[dict] | None = None,
         is_follow_up: bool = False,
-        language: str = "English",
+        language: str = "en",
     ) -> str:
         prompt = self._build(incident_text, intent, retrieved_articles,
                              user_name, mood, history or [], is_follow_up, language)
@@ -129,7 +137,7 @@ Write only the message. No subject line, no notes, no mention of articles or con
                 return r.text.strip()
             except Exception as e:
                 print(f"[!] Gemini call failed: {e}. Using the local fallback.")
-        return self._fallback(incident_text, retrieved_articles, user_name, is_follow_up, language)
+        return self._fallback(incident_text, retrieved_articles, user_name, is_follow_up)
 
     def stream(
         self,
@@ -140,7 +148,7 @@ Write only the message. No subject line, no notes, no mention of articles or con
         mood: str = "calm",
         history: list[dict] | None = None,
         is_follow_up: bool = False,
-        language: str = "English",
+        language: str = "en",
     ) -> Iterator[str]:
         """Yield the reply in chunks so the customer isn't watching a blank screen."""
         prompt = self._build(incident_text, intent, retrieved_articles,
@@ -155,7 +163,7 @@ Write only the message. No subject line, no notes, no mention of articles or con
                 return
             except Exception as e:
                 print(f"[!] Gemini stream failed: {e}. Using the local fallback.")
-        yield self._fallback(incident_text, retrieved_articles, user_name, is_follow_up, language)
+        yield self._fallback(incident_text, retrieved_articles, user_name, is_follow_up)
 
     def generate_escalation(
         self,
@@ -166,7 +174,7 @@ Write only the message. No subject line, no notes, no mention of articles or con
         reason: str = "low_confidence",
         mood: str = "calm",
         history: list[dict] | None = None,
-        language: str = "English",
+        language: str = "en",
     ) -> str:
         nearby = ""
         if retrieved_articles:
@@ -178,11 +186,11 @@ Write only the message. No subject line, no notes, no mention of articles or con
             "wording_mismatch": "the wording doesn't line up with what you'd expect for this kind of issue",
         }.get(reason, "you can't answer this one safely")
 
-        lang_note = f"\nTARGET LANGUAGE: Write your response entirely in {language}." if language and language != "English" else ""
-
         prompt = f"""{VOICE}
 
-{MOOD_NOTE.get(mood, MOOD_NOTE["calm"])}{lang_note}
+{MOOD_NOTE.get(mood, MOOD_NOTE["calm"])}
+
+{self._language_line(language)}
 
 CUSTOMER: {user_name}
 WHAT THEY SAID: {incident_text}
@@ -207,27 +215,6 @@ Write only the message."""
             except Exception as e:
                 print(f"[!] Gemini call failed: {e}. Using the local fallback.")
 
-        if language == "Spanish":
-            return (
-                f"{user_name}, prefiero no adivinar en este caso: no estoy lo suficientemente seguro de haberlo entendido correctamente. "
-                f"Lo estoy pasando a un colega que lo solucionará. Si puedes añadir más detalles, les ahorrará tiempo."
-            )
-        elif language == "French":
-            return (
-                f"{user_name}, je préfère ne pas deviner — je ne suis pas assez sûr de l'avoir compris correctement. "
-                f"Je le transmets à un collègue. Si vous pouvez ajouter des détails, cela leur fera gagner du temps."
-            )
-        elif language == "German":
-            return (
-                f"{user_name}, ich möchte hier lieber nicht raten — ich bin mir nicht sicher genug, ob ich es richtig verstanden habe. "
-                f"Ich leite es an einen Kollegen weiter. Wenn Sie weitere Details hinzufügen können, spart das Zeit."
-            )
-        elif language == "Hindi":
-            return (
-                f"{user_name}, मैं इस पर अनुमान नहीं लगाना चाहता — मुझे पूरा यकीन नहीं है। "
-                f"मैं इसे अपने सहयोगी को सौंप रहा हूँ। यदि आप कुछ और विवरण दे सकें, तो इससे उनका समय बचेगा।"
-            )
-
         return (
             f"{user_name}, I'd rather not guess at this one — I'm not confident enough that "
             f"I've understood it correctly, and a wrong answer here would waste your time.\n\n"
@@ -236,37 +223,44 @@ Write only the message."""
             f"a round trip."
         )
 
+    def greet(self, user_name: str, language: str = "en") -> str:
+        """A bare 'hi' isn't an issue — answer it like a person would."""
+        prompt = f"""{VOICE}
+
+{self._language_line(language)}
+
+CUSTOMER: {user_name}
+They've just said hello — nothing else yet.
+
+Write one short, warm sentence that greets them back by name and asks what's
+going on. No corporate phrasing, no "How can I assist you today". Write only
+the message."""
+
+        if self.client:
+            try:
+                r = self.client.models.generate_content(model=self.model, contents=prompt)
+                return r.text.strip()
+            except Exception as e:
+                print(f"[!] Gemini call failed: {e}. Using the local fallback.")
+
+        FALLBACK_GREETING = {
+            "en": f"Hey {user_name} — what's going on?",
+            "hi": f"Hi {user_name} — bataiye, kya dikkat aa rahi hai?",
+            "ml": f"Hai {user_name} — enthാണ് പ്രശ്നം?",
+            "es": f"Hola {user_name} — ¿qué ha pasado?",
+            "fr": f"Bonjour {user_name} — que se passe-t-il ?",
+        }
+        return FALLBACK_GREETING.get(language, FALLBACK_GREETING["en"])
+
     # ── Offline fallback ───────────────────────────────────────────────
 
     @staticmethod
-    def _fallback(incident_text, articles, user_name, is_follow_up=False, language="English") -> str:
+    def _fallback(incident_text, articles, user_name, is_follow_up=False) -> str:
         top = articles[0] if articles else None
         if not top:
-            if language == "Spanish":
-                return f"{user_name}, recibí tu mensaje pero ningún artículo lo cubre. Le pediré a un colega que lo revise."
-            elif language == "French":
-                return f"{user_name}, j'ai bien reçu votre message mais aucun article ne le couvre. Je demande à un collègue de regarder."
-            elif language == "German":
-                return f"{user_name}, ich habe deine Nachricht erhalten, aber kein Artikel deckt das ab. Ein Kollege wird sich das ansehen."
-            elif language == "Hindi":
-                return f"{user_name}, मुझे आपका संदेश मिल गया है लेकिन हमारे लेखों में यह नहीं है। मैं एक सहयोगी को देखने के लिए कहूँगा।"
             return (
                 f"{user_name}, I've got your message but nothing in our help articles covers "
                 f"it, so I don't want to guess. Let me get a colleague to look."
             )
-
-        if language == "Spanish":
-            opener = "" if is_follow_up else f"Hola {user_name} — aquí está la información sobre tu caso.\n\n"
-            return f"{opener}{top['content']}\n\n¿Esto resuelve tu consulta?"
-        elif language == "French":
-            opener = "" if is_follow_up else f"Bonjour {user_name} — voici où en est votre demande.\n\n"
-            return f"{opener}{top['content']}\n\nEst-ce que cela correspond à votre situation ?"
-        elif language == "German":
-            opener = "" if is_follow_up else f"Hallo {user_name} — hier ist der aktuelle Stand.\n\n"
-            return f"{opener}{top['content']}\n\nPasst das zu Ihrer Situation?"
-        elif language == "Hindi":
-            opener = "" if is_follow_up else f"नमस्ते {user_name} — आपके अनुरोध की स्थिति यहाँ है।\n\n"
-            return f"{opener}{top['content']}\n\nक्या यह आपकी समस्या का समाधान करता है?"
-
         opener = "" if is_follow_up else f"{user_name} — here's where that stands.\n\n"
         return f"{opener}{top['content']}\n\nDoes that match what you're seeing?"

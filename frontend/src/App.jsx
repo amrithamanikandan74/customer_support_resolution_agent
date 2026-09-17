@@ -33,6 +33,24 @@ const STORE_KEY = "frontdesk.v2";
 const GATE = 0.25; // mirrors CONFIDENCE_THRESHOLD in backend/app/config.py
 const AGENT = "Maya"; // mirrors AGENT_NAME
 
+const FALLBACK_LANGUAGES = [
+  { code: "auto", name: "Match my message" },
+  { code: "en", name: "English" },
+  { code: "hi", name: "Hindi" },
+  { code: "ml", name: "Malayalam" },
+  { code: "ta", name: "Tamil" },
+  { code: "te", name: "Telugu" },
+  { code: "kn", name: "Kannada" },
+  { code: "bn", name: "Bengali" },
+  { code: "mr", name: "Marathi" },
+  { code: "gu", name: "Gujarati" },
+  { code: "pa", name: "Punjabi" },
+  { code: "ur", name: "Urdu" },
+  { code: "es", name: "Spanish" },
+  { code: "fr", name: "French" },
+  { code: "ar", name: "Arabic" },
+];
+
 const TOPICS = [
   { id: "account", icon: <Key />, name: "Signing in", desc: "Passwords, locked accounts, and login errors.",
     issues: ["I can't log in to my account", "My account is locked after failed attempts"] },
@@ -61,8 +79,8 @@ const WAITING = [
 ];
 
 const load = () => {
-  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || { chats: [], name: "" }; }
-  catch { return { chats: [], name: "" }; }
+  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || { chats: [], name: "", lang: "auto" }; }
+  catch { return { chats: [], name: "", lang: "auto" }; }
 };
 const persist = (s) => { try { localStorage.setItem(STORE_KEY, JSON.stringify(s)); } catch { /* private mode */ } };
 
@@ -205,6 +223,7 @@ function Inspector({ data, onClose }) {
       <p className="insp-lede">
         {out ? (REASON[data.escalation_reason] || "This one needed a person.")
              : "Every step I took, and the articles I leaned on."}
+        {data.language && data.language !== "English" ? ` Replying in ${data.language}.` : ""}
       </p>
 
       <div className="insp-block">
@@ -419,6 +438,8 @@ export default function App() {
 
   const [chats, setChats] = useState(boot.chats);
   const [name, setName] = useState(boot.name);
+  const [lang, setLang] = useState(boot.lang || "auto");
+  const [languages, setLanguages] = useState(FALLBACK_LANGUAGES);
   const [activeId, setActiveId] = useState(null);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
@@ -440,7 +461,13 @@ export default function App() {
   const turnCount = chat?.turns.length ?? 0;
   const tailText = chat?.turns[turnCount - 1]?.text ?? "";
 
-  useEffect(() => { persist({ chats, name }); }, [chats, name]);
+  useEffect(() => { persist({ chats, name, lang }); }, [chats, name, lang]);
+
+  useEffect(() => {
+    fetch(`${API}/languages`).then((r) => r.json())
+      .then((d) => { if (Array.isArray(d) && d.length) setLanguages(d); })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -476,6 +503,7 @@ export default function App() {
 
     const body = JSON.stringify({
       incident_text: text, user_name: who || "Customer", conversation_id: id, history,
+      preferred_language: lang,
     });
 
     try {
@@ -534,7 +562,7 @@ export default function App() {
     } finally {
       setBusy(false);
     }
-  }, [patch]);
+  }, [patch, lang]);
 
   const historyOf = (c) => c.turns
     .filter((t) => t.text && !t.failed)
@@ -652,6 +680,15 @@ export default function App() {
           <label className="sr" htmlFor="who">Your name</label>
           <input id="who" value={name} onChange={(e) => setName(e.target.value)}
             placeholder="Add your name" maxLength={40} />
+        </div>
+
+        <div className="rail-lang">
+          <label className="sr" htmlFor="lang">Reply language</label>
+          <select id="lang" value={lang} onChange={(e) => setLang(e.target.value)}>
+            {languages.map((l) => (
+              <option key={l.code} value={l.code}>{l.name}</option>
+            ))}
+          </select>
         </div>
 
         <div className="rail-status">

@@ -1,176 +1,189 @@
-# Customer Support AI Resolution Agent
+# Customer Support Resolution Agent
 
-An **enterprise-grade, autonomous customer support agent** powered by **Retrieval-Augmented Generation (RAG)**, **Google Gemini 2.0 Flash**, **ChromaDB**, and **FastAPI**.
+A support agent that answers Tier-1 customer questions itself when it's actually
+confident, and hands off to a human the moment it isn't — instead of guessing.
 
-Designed to automatically diagnose, retrieve knowledge, and resolve Tier-1 customer support incidents with high accuracy, zero hallucinations, and built-in Root Cause Analysis (RCA) guardrails.
+It's built around one idea: an LLM that always sounds confident is a liability
+in customer support. So the pipeline runs every incoming message through an
+intent classifier and a semantic search over a knowledge base, checks the
+result against a confidence threshold **and** a keyword guardrail, and only
+then lets the model write a reply — grounded strictly in the articles it
+retrieved. Anything that doesn't clear the bar gets escalated with a real
+ticket reference, not a canned "please contact support."
 
----
+## What it does
 
-## Key Features
+- **Answers from a knowledge base, not from memory.** Every reply is grounded
+  in articles retrieved by semantic search (ChromaDB + sentence-transformers)
+  over 25 support articles across 8 categories — logins, payments, refunds,
+  orders, subscriptions, and more.
+- **Knows when to say "I don't know."** A confidence threshold, a minimum
+  retrieval-similarity check, and a keyword-based guardrail all have to pass
+  before the agent auto-resolves. Fail any of them and it escalates instead of
+  answering with something that sounds right but isn't grounded.
+- **Talks like a person, not a template.** The agent has a name (Maya) and a
+  written voice with a list of banned corporate phrases ("kindly", "please be
+  advised", "rest assured"). It reads the customer's tone — calm, frustrated,
+  or under time pressure — and adjusts accordingly.
+- **Replies in the customer's language.** Auto-detects the language of the
+  incoming message, or the customer can pin a specific one from a picker in
+  the UI, covering English plus ten Indian languages and a few others.
+- **Handles small talk without escalating it.** A bare "hi" gets a warm reply,
+  not a trip through the full confidence pipeline (a "hlo" used to get
+  escalated to a human queue for having no content — that's fixed).
+- **Streams the reply** over server-sent events so the answer appears as it's
+  written, with the reasoning (intent, confidence, matched articles) arriving
+  first so the UI can show its work while the text is still typing out.
+- **Escalates with a real handoff.** When a case needs a person, the customer
+  leaves an email and gets back a ticket reference (`CS-4031`) and an expected
+  reply window, not a dead end.
+- **Learns where the knowledge base is thin.** Every resolution, feedback vote,
+  and ticket is logged to CSV. An ops dashboard in the UI turns that into a
+  resolution rate, per-intent breakdown, and — most usefully — a list of the
+  lowest-confidence questions that came in, which is exactly where a new
+  article should be written.
 
-* **Semantic Vector Search (RAG)**: Uses `sentence-transformers` (`all-MiniLM-L6-v2`) and **ChromaDB** to index and retrieve the top-matching knowledge base articles out of 25+ detailed scenarios.
-* **Grounded LLM Generation**: Integrates **Google Gemini 2.0 Flash** to produce empathetic, natural-language resolutions strictly grounded in verified knowledge articles.
-* **RCA & Confidence Guardrails**: Validates intent confidence thresholds and enforces Root Cause Analysis (RCA) keyword rules before auto-resolving — automatically escalating low-confidence issues to human specialists.
-* **Executive Dashboard & UI**: Responsive, non-gradient dark slate interface featuring real-time system metrics, category incident cards, dynamic resolution metadata, and conversation history.
-* **Offline Resilient Fallback**: Includes local template fallback generators when an external LLM API key is not configured or network calls fail.
+## How a request flows
 
----
-
-## System Architecture
-
-```text
-               ┌────────────────────────┐
-               │    Customer Incident   │
-               └───────────┬────────────┘
-                           │
-                           ▼
-             ┌───────────────────────────┐
-             │ TF-IDF Intent Classifier  │
-             └─────────────┬─────────────┘
-                           │
-       ┌───────────────────┴───────────────────┐
-       │                                       │
-       ▼                                       ▼
-┌───────────────┐                  ┌──────────────────────┐
-│  RCA Rule &   │                  │  ChromaDB Vector     │
-│  Confidence   │                  │  Search (Top K)      │
-└──────┬────────┘                  └──────────┬───────────┘
-       │                                      │
-       └───────────────────┬──────────────────┘
-                           │
-                           ▼
-             ┌───────────────────────────┐
-             │   Google Gemini 2.0 LLM   │
-             │   Grounded Response Gen   │
-             └─────────────┬─────────────┘
-                           │
-                           ▼
-             ┌───────────────────────────┐
-             │  Structured Resolution    │
-             │  (Resolved or Escalated)  │
-             └─────────────┬─────────────┘
+```
+Customer message
+       │
+       ▼
+Small talk?  ──yes──▶  Warm reply, skip the pipeline
+       │no
+       ▼
+Detect language ──▶ Classify intent (TF-IDF + Logistic Regression)
+       │
+       ▼
+Retrieve top-K articles (semantic search, ChromaDB)
+       │
+       ▼
+Guardrail check:
+  • confidence ≥ threshold?
+  • best article similarity ≥ minimum?
+  • does the wording back up the predicted intent?
+       │
+   ┌───┴───┐
+  pass    fail
+   │        │
+   ▼        ▼
+Generate    Escalate — offer a
+grounded    human handoff with
+reply       a ticket reference
+   │        │
+   └───┬────┘
+       ▼
+Log the outcome → feeds the ops dashboard
 ```
 
----
+## Stack
 
-## Technology Stack
+**Backend** — FastAPI, Google Gemini (`google-genai`) for generation with an
+offline template fallback when no API key is set, ChromaDB + sentence-transformers
+(`all-MiniLM-L6-v2`) for retrieval, scikit-learn (TF-IDF + Logistic Regression)
+for intent classification, `langdetect` for language detection, CSV-backed
+logging (no database to stand up).
 
-### Backend
-* **Framework**: FastAPI, Uvicorn
-* **Generative AI**: Google Gemini API (`google-genai` SDK)
-* **Vector Database**: ChromaDB
-* **Embeddings**: `sentence-transformers` (`all-MiniLM-L6-v2`)
-* **Machine Learning**: Scikit-Learn (TF-IDF Intent Classifier), Joblib
-* **Data Processing**: Pandas, Pydantic v2
+**Frontend** — React 19 + Vite, no UI framework — hand-built components and a
+custom design system (Bricolage Grotesque + Newsreader, aubergine-and-porcelain
+palette). Streams responses over SSE, persists chats to `localStorage`.
 
-### Frontend
-* **Core**: React 18, Vite 8
-* **Styling**: Modern Vanilla CSS Design Tokens (Obsidian & Slate Theme)
-* **State Management**: React Hooks (Local & Session State)
+## Project structure
 
----
+```
+backend/
+├── app/
+│   ├── main.py                        FastAPI routes
+│   ├── config.py                      thresholds, agent identity, languages
+│   ├── schemas.py                     Pydantic request/response models
+│   └── services/
+│       ├── intent_classifier.py       TF-IDF + Logistic Regression
+│       ├── rag_retriever.py           ChromaDB semantic search
+│       ├── resolution_orchestrator.py guardrails, mood/language detection
+│       ├── response_generator.py      Gemini prompt + offline fallback
+│       └── store.py                   CSV logging + ops aggregation
+├── data/
+│   ├── knowledge_base.json            25 articles across 8 categories
+│   ├── incidents.csv                  120 labelled training examples
+│   └── build_vector_store.py          standalone index builder
+├── tests/                             pytest suite (API, orchestrator, classifier, retriever)
+├── train_model.py                     regenerate the intent classifier
+└── run.py                             dev server entry point
 
-## Project Structure
-
-```text
-customer_support_resolution_agent/
-├── backend/
-│   ├── app/
-│   │   ├── services/
-│   │   │   ├── rag_retriever.py         # ChromaDB semantic vector search
-│   │   │   ├── response_generator.py    # Gemini 2.0 Flash integration
-│   │   │   ├── intent_classifier.py     # TF-IDF intent prediction
-│   │   │   └── resolution_orchestrator.py # Core RAG & guardrail pipeline
-│   │   ├── config.py                    # Environment & system parameters
-│   │   ├── main.py                      # FastAPI application endpoints
-│   │   └── schemas.py                   # Pydantic request & response models
-│   ├── data/
-│   │   ├── knowledge_base.json          # 25 detailed knowledge articles
-│   │   ├── incidents.csv                # Training datasets
-│   │   └── build_vector_store.py        # Vector embedding build script
-│   ├── models/
-│   │   └── intent_model.pkl             # Trained classifier artifact
-│   ├── .env.example                     # Environment template
-│   ├── requirements.txt                 # Python dependencies
-│   └── run.py                           # Server runner script
-└── frontend/
-    ├── src/
-    │   ├── App.jsx                      # Main app & dashboard components
-    │   ├── App.css                      # Resolution Hub styles & tokens
-    │   ├── index.css                    # Slate design system
-    │   └── main.jsx                     # Vite React entry point
-    ├── index.html                       # HTML template
-    └── package.json                     # Frontend dependencies
+frontend/
+└── src/
+    ├── App.jsx                        chat, inspector, ops dashboard, escalation form
+    ├── App.css / index.css            design tokens and layout
+    └── main.jsx                       Vite entry point
 ```
 
----
-
-## Getting Started
+## Getting started
 
 ### Prerequisites
-* **Python 3.10+**
-* **Node.js 18+**
+- Python 3.10+
+- Node.js 18+
+- A [Gemini API key](https://aistudio.google.com/apikey) (optional — the agent
+  falls back to a template response without one, so the guardrail logic still
+  works, just without generated prose)
 
----
+### Backend
 
-### Backend Setup
+```bash
+cd backend
+python3 -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+cp .env.example .env                                  # add your GEMINI_API_KEY
+python run.py
+```
 
-1. **Navigate to the backend directory**:
-   ```bash
-   cd backend
-   ```
+The server runs at `http://127.0.0.1:8000`. On first run, `sentence-transformers`
+downloads its embedding model (~80MB) from Hugging Face — that needs an
+internet connection once, after which it's cached locally. The vector index
+and the intent model are both built automatically on first startup if they
+don't already exist; `train_model.py` and `data/build_vector_store.py` let you
+regenerate either by hand.
 
-2. **Create & activate virtual environment**:
-   ```bash
-   # Windows (PowerShell)
-   python -m venv .venv
-   .\.venv\Scripts\Activate.ps1
+### Frontend
 
-   # Linux / macOS
-   python3 -m venv .venv
-   source .venv/bin/activate
-   ```
+```bash
+cd frontend
+npm install
+cp .env.example .env   # point VITE_API_URL elsewhere if the backend isn't local
+npm run dev
+```
 
-3. **Install dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
+Opens at `http://localhost:5173`.
 
-4. **Configure environment variables**:
-   Create a `.env` file in the `backend/` directory:
-   ```env
-   GEMINI_API_KEY=your_google_gemini_api_key_here
-   ```
+### Tests
 
-5. **Build the ChromaDB Vector Store**:
-   ```bash
-   python data/build_vector_store.py
-   ```
+```bash
+cd backend
+pytest
+```
 
-6. **Start the FastAPI Backend**:
-   ```bash
-   python run.py
-   ```
-   *The server runs on **`http://127.0.0.1:8000`***
+## API
 
----
+| Endpoint | What it does |
+|---|---|
+| `POST /resolve` | Full pipeline, single JSON response |
+| `POST /resolve/stream` | Same pipeline as server-sent events (`meta` → `token`... → `done`) |
+| `GET /knowledge` | List all knowledge base articles |
+| `GET /languages` | Supported reply languages |
+| `POST /feedback` | Log a thumbs up/down on a reply |
+| `POST /escalate` | Hand a case to a human, returns a ticket reference |
+| `GET /stats` | Resolution rate, per-intent breakdown, and knowledge gaps |
 
-### Frontend Setup
+## Known limitations
 
-1. Open a new terminal and **navigate to the frontend directory**:
-   ```bash
-   cd frontend
-   ```
+- The intent classifier is trained on 120 examples across 8 categories — solid
+  for a portfolio-scale knowledge base, but it won't generalize to intents
+  outside that set. Add rows to `data/incidents.csv` and re-run `train_model.py`
+  to extend it.
+- CSV logging is intentionally simple (no database to run), which means
+  concurrent writes aren't safely serialized beyond a basic lock — fine for a
+  single-instance deployment, not for scaling out.
+- Language detection on very short messages (a few words) is unreliable by
+  nature; the language picker in the UI exists specifically so a customer
+  isn't stuck with a bad guess.
 
-2. **Install dependencies**:
-   ```bash
-   npm install
-   ```
 
-3. **Start Vite Development Server**:
-   ```bash
-   npm run dev
-   ```
-   *The application will open on **`http://localhost:5173/`***
-
----

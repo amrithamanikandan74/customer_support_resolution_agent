@@ -1,4 +1,6 @@
 import json
+import sys
+
 import chromadb
 from sentence_transformers import SentenceTransformer
 
@@ -9,7 +11,25 @@ class RAGRetriever:
     """Semantic retriever using sentence-transformers + ChromaDB."""
 
     def __init__(self):
-        self.embedding_model = SentenceTransformer(EMBEDDING_MODEL)
+        try:
+            self.embedding_model = SentenceTransformer(EMBEDDING_MODEL)
+        except Exception as e:
+            # The first run downloads ~80MB from huggingface.co. Without
+            # internet access (or on a locked-down network) that download
+            # fails with a long, unreadable transformers traceback — this
+            # turns it into something you can actually act on.
+            print(
+                f"\n[!] Couldn't load the embedding model '{EMBEDDING_MODEL}'.\n"
+                f"    This downloads from huggingface.co the first time it runs, "
+                f"so it needs an internet connection once.\n"
+                f"    Underlying error: {e}\n",
+                file=sys.stderr,
+            )
+            raise RuntimeError(
+                f"Embedding model '{EMBEDDING_MODEL}' unavailable — see the network "
+                f"note above. The app can't retrieve knowledge articles without it."
+            ) from e
+
         self.top_k = RAG_TOP_K
 
         # Load or build the ChromaDB collection

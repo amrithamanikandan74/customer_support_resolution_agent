@@ -4,7 +4,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
-from app.config import AGENT_NAME, KNOWLEDGE_BASE_FILE
+from app.config import AGENT_NAME, KNOWLEDGE_BASE_FILE, LANGUAGE_NAMES, SUPPORTED_LANGUAGES
 from app.schemas import (
     Ack,
     Article,
@@ -13,6 +13,7 @@ from app.schemas import (
     FeedbackRequest,
     Health,
     IncidentRequest,
+    Language,
     ResolutionResponse,
     StatsResponse,
 )
@@ -61,8 +62,13 @@ def resolve_incident(request: IncidentRequest):
         user_name=request.user_name or "Customer",
         history=[t.model_dump() for t in request.history],
         conversation_id=request.conversation_id or "",
-        language=request.language or "English",
+        preferred_language=request.preferred_language or "auto",
     )
+
+
+@app.get("/languages", response_model=list[Language])
+def languages():
+    return SUPPORTED_LANGUAGES
 
 
 @app.post("/resolve/stream")
@@ -79,29 +85,34 @@ def resolve_incident_stream(request: IncidentRequest):
     history = [t.model_dump() for t in request.history]
     user_name = request.user_name or "Customer"
     text = request.incident_text
-    language = request.language or "English"
+    preferred_language = request.preferred_language or "auto"
 
     def events():
-        a = orchestrator.assess(text, history)
-        status = "escalated" if a["escalation_reason"] else "resolved"
+        a = orchestrator.assess(text, history, preferred_language)
+        status = "escalated" if (not a["is_greeting"] and a["escalation_reason"]) else "resolved"
         articles = orchestrator._summarise(a["articles"])
+        language_name = LANGUAGE_NAMES.get(a["language"], a["language"])
 
         meta = {
             "status": status,
             "predicted_intent": a["intent"],
             "confidence": a["confidence"],
             "retrieved_articles": articles,
-            "knowledge_title": a["articles"][0]["title"] if (a["articles"] and status == "resolved") else None,
+            "knowledge_title": a["articles"][0]["title"] if (a["articles"] and status == "resolved" and not a["is_greeting"]) else None,
             "mood": a["mood"],
             "escalation_reason": a["escalation_reason"],
             "follow_up": a["is_follow_up"],
-            "suggested_replies": orchestrator._suggestions(status, a["intent"]),
-            "language": language,
+            "suggested_replies": [] if a["is_greeting"] else orchestrator._suggestions(status, a["intent"]),
+            "language": language_name,
         }
         yield f"event: meta\ndata: {json.dumps(meta)}\n\n"
 
         parts: list[str] = []
-        if status == "escalated":
+        if a["is_greeting"]:
+            reply = orchestrator.response_generator.greet(user_name, a["language"])
+            parts.append(reply)
+            yield f"event: token\ndata: {json.dumps(reply)}\n\n"
+        elif status == "escalated":
             reply = orchestrator.response_generator.generate_escalation(
                 incident_text=text,
                 confidence=a["confidence"],
@@ -110,7 +121,7 @@ def resolve_incident_stream(request: IncidentRequest):
                 reason=a["escalation_reason"],
                 mood=a["mood"],
                 history=history,
-                language=language,
+                language=a["language"],
             )
             parts.append(reply)
             yield f"event: token\ndata: {json.dumps(reply)}\n\n"
@@ -123,7 +134,7 @@ def resolve_incident_stream(request: IncidentRequest):
                 mood=a["mood"],
                 history=history,
                 is_follow_up=a["is_follow_up"],
-                language=language,
+                language=a["language"],
             ):
                 parts.append(chunk)
                 yield f"event: token\ndata: {json.dumps(chunk)}\n\n"
