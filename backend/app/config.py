@@ -26,7 +26,22 @@ MIN_ARTICLE_SIMILARITY = 0.30
 
 # ── Gemini Configuration ──
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash")
+
+# ── CORS ──
+# Comma-separated list of origins allowed to call this API, e.g.
+#   CORS_ORIGINS=https://myapp.com,https://staging.myapp.com
+# Defaults to the Vite dev server on localhost/127.0.0.1 so local development
+# keeps working out of the box. Never falls back to "*" — a wildcard origin
+# combined with credentialed requests isn't actually spec-legal in browsers,
+# and it would let any site call this API on a visitor's behalf.
+CORS_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv(
+        "CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173"
+    ).split(",")
+    if origin.strip()
+]
 
 # ── The agent's identity ──
 # Support feels human when it comes from someone, not from "the system".

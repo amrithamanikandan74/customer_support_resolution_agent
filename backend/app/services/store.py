@@ -91,24 +91,34 @@ def log_feedback(helpful: bool, conversation_id: str = "", intent: str = "",
     })
 
 
-def next_ticket_ref() -> str:
-    """Human-readable, sequential-ish reference. e.g. CS-4831."""
-    existing = _read(TICKETS)
-    return f"CS-{4000 + len(existing) + 1}"
-
-
-def log_ticket(ticket_ref: str, user_name: str, email: str, priority: str,
-               intent: str, incident_text: str):
-    _append(TICKETS, {
-        "at": _now(),
-        "ticket_ref": ticket_ref,
-        "user_name": user_name,
-        "email": email,
-        "priority": priority,
-        "intent": intent or "",
-        "incident_text": (incident_text or "")[:500],
-        "state": "waiting on an agent",
-    })
+def create_ticket(user_name: str, email: str, priority: str,
+                   intent: str, incident_text: str) -> str:
+    """
+    Assigns the next ticket reference and logs the ticket in one atomic
+    step, under a single lock acquisition. Counting existing rows and then
+    appending as two separate locked operations (the old next_ticket_ref +
+    log_ticket pair) left a window where two concurrent requests could both
+    read the same count and hand out the same reference — this closes it.
+    """
+    with _lock:
+        _ensure(TICKETS)
+        with TICKETS.open("r", newline="", encoding="utf-8") as f:
+            existing = list(csv.DictReader(f))
+        ref = f"CS-{4000 + len(existing) + 1}"
+        with TICKETS.open("a", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=_HEADERS[TICKETS], extrasaction="ignore")
+            writer.writerow({
+                **{k: "" for k in _HEADERS[TICKETS]},
+                "at": _now(),
+                "ticket_ref": ref,
+                "user_name": user_name,
+                "email": email,
+                "priority": priority,
+                "intent": intent or "",
+                "incident_text": (incident_text or "")[:500],
+                "state": "waiting on an agent",
+            })
+    return ref
 
 
 # ── Reader / aggregation ───────────────────────────────────────────────

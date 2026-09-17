@@ -4,7 +4,13 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
-from app.config import AGENT_NAME, KNOWLEDGE_BASE_FILE, LANGUAGE_NAMES, SUPPORTED_LANGUAGES
+from app.config import (
+    AGENT_NAME,
+    CORS_ORIGINS,
+    KNOWLEDGE_BASE_FILE,
+    LANGUAGE_NAMES,
+    SUPPORTED_LANGUAGES,
+)
 from app.schemas import (
     Ack,
     Article,
@@ -28,7 +34,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -203,9 +209,7 @@ def feedback(request: FeedbackRequest):
 
 @app.post("/escalate", response_model=EscalationResponse)
 def escalate(request: EscalationRequest):
-    ref = store.next_ticket_ref()
-    store.log_ticket(
-        ticket_ref=ref,
+    ref = store.create_ticket(
         user_name=request.user_name,
         email=str(request.email),
         priority=request.priority,
