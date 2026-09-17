@@ -1,47 +1,44 @@
 # Customer Support Resolution Agent
 
-A support agent that answers Tier-1 customer questions itself when it's actually
-confident, and hands off to a human the moment it isn't — instead of guessing.
+An AI support agent that tries to answer customer questions itself, but only
+when it's actually sure — otherwise it hands the conversation to a human.
 
-It's built around one idea: an LLM that always sounds confident is a liability
-in customer support. So the pipeline runs every incoming message through an
-intent classifier and a semantic search over a knowledge base, checks the
-result against a confidence threshold **and** a keyword guardrail, and only
-then lets the model write a reply — grounded strictly in the articles it
-retrieved. Anything that doesn't clear the bar gets escalated with a real
-ticket reference, not a canned "please contact support."
+The problem I wanted to solve: an LLM that always sounds confident is
+dangerous in a support context, because it'll happily make up an answer that
+sounds right but isn't. So instead of just calling Gemini and hoping for the
+best, every message first goes through an intent classifier and a search
+over the knowledge base. The model only gets to write a reply if the
+confidence score, the article match, and a keyword sanity-check all agree —
+and even then, it's only allowed to use what it actually retrieved. If
+anything looks shaky, the customer gets escalated with a real ticket number
+instead of a canned "please contact support."
 
 ## What it does
 
-- **Answers from a knowledge base, not from memory.** Every reply is grounded
-  in articles retrieved by semantic search (ChromaDB + sentence-transformers)
-  over 25 support articles across 8 categories — logins, payments, refunds,
-  orders, subscriptions, and more.
-- **Knows when to say "I don't know."** A confidence threshold, a minimum
-  retrieval-similarity check, and a keyword-based guardrail all have to pass
-  before the agent auto-resolves. Fail any of them and it escalates instead of
-  answering with something that sounds right but isn't grounded.
-- **Talks like a person, not a template.** The agent has a name (Maya) and a
-  written voice with a list of banned corporate phrases ("kindly", "please be
-  advised", "rest assured"). It reads the customer's tone — calm, frustrated,
-  or under time pressure — and adjusts accordingly.
-- **Replies in the customer's language.** Auto-detects the language of the
-  incoming message, or the customer can pin a specific one from a picker in
-  the UI, covering English plus ten Indian languages and a few others.
-- **Handles small talk without escalating it.** A bare "hi" gets a warm reply,
-  not a trip through the full confidence pipeline (a "hlo" used to get
-  escalated to a human queue for having no content — that's fixed).
-- **Streams the reply** over server-sent events so the answer appears as it's
-  written, with the reasoning (intent, confidence, matched articles) arriving
-  first so the UI can show its work while the text is still typing out.
-- **Escalates with a real handoff.** When a case needs a person, the customer
-  leaves an email and gets back a ticket reference (`CS-4031`) and an expected
-  reply window, not a dead end.
-- **Learns where the knowledge base is thin.** Every resolution, feedback vote,
-  and ticket is logged to CSV. An ops dashboard in the UI turns that into a
-  resolution rate, per-intent breakdown, and — most usefully — a list of the
-  lowest-confidence questions that came in, which is exactly where a new
-  article should be written.
+- **Answers come from the knowledge base, not the model's memory.** Replies
+  are grounded in articles found through semantic search (ChromaDB +
+  sentence-transformers) — 28 articles across 9 categories, covering
+  logins, payments, refunds, orders, subscriptions, and more.
+- **It's willing to say "I don't know."** Confidence, similarity, and a
+  keyword check all have to pass before it answers. If one fails, it
+  escalates instead of guessing.
+- **It talks like a person.** The agent has a name (Maya) and steers clear
+  of stock phrases like "kindly" or "rest assured." It also picks up on
+  whether the customer sounds calm, frustrated, or in a rush, and adjusts
+  its tone accordingly.
+- **It replies in the customer's language,** either detected automatically
+  or picked from the UI — English, ten Indian languages, and a few others.
+- **Small talk doesn't trip the pipeline.** A message like "hi" gets a warm
+  reply instead of getting escalated for having no real content to work
+  with.
+- **Replies stream in** so the answer appears as it's written, with the
+  reasoning (intent, confidence, matched articles) showing up first.
+- **Escalation is a real handoff**, not a dead end — the customer gets a
+  ticket number and an expected reply time.
+- **It shows where the knowledge base is weak.** Every resolution, feedback
+  vote, and ticket gets logged, and an ops dashboard turns that into a
+  resolution rate, a breakdown by intent, and a list of the questions it
+  was least confident about — a decent hint for what article to write next.
 
 ## How a request flows
 
@@ -78,15 +75,17 @@ Log the outcome → feeds the ops dashboard
 
 ## Stack
 
-**Backend** — FastAPI, Google Gemini (`google-genai`) for generation with an
-offline template fallback when no API key is set, ChromaDB + sentence-transformers
-(`all-MiniLM-L6-v2`) for retrieval, scikit-learn (TF-IDF + Logistic Regression)
-for intent classification, `langdetect` for language detection, CSV-backed
-logging (no database to stand up).
+**Backend** — FastAPI, Google Gemini (`google-genai`) for writing replies,
+with an offline fallback for when there's no API key. ChromaDB +
+sentence-transformers (`all-MiniLM-L6-v2`) handle retrieval, scikit-learn
+(TF-IDF + Logistic Regression) handles intent classification, `langdetect`
+handles language detection, and logging is just CSV — no database to stand
+up.
 
-**Frontend** — React 19 + Vite, no UI framework — hand-built components and a
-custom design system (Bricolage Grotesque + Newsreader, aubergine-and-porcelain
-palette). Streams responses over SSE, persists chats to `localStorage`.
+**Frontend** — React 19 + Vite, no UI framework. Hand-built components with
+a custom design system (Bricolage Grotesque + Newsreader, aubergine and
+porcelain palette). Responses stream over SSE, and chats are saved to
+`localStorage`.
 
 ## Project structure
 
@@ -103,8 +102,8 @@ backend/
 │       ├── response_generator.py      Gemini prompt + offline fallback
 │       └── store.py                   CSV logging + ops aggregation
 ├── data/
-│   ├── knowledge_base.json            25 articles across 8 categories
-│   ├── incidents.csv                  120 labelled training examples
+│   ├── knowledge_base.json            28 articles across 9 categories
+│   ├── incidents.csv                  135 labelled training examples
 │   └── build_vector_store.py          standalone index builder
 ├── tests/                             pytest suite (API, orchestrator, classifier, retriever)
 ├── train_model.py                     regenerate the intent classifier
@@ -122,9 +121,9 @@ frontend/
 ### Prerequisites
 - Python 3.10+
 - Node.js 18+
-- A [Gemini API key](https://aistudio.google.com/apikey) (optional — the agent
-  falls back to a template response without one, so the guardrail logic still
-  works, just without generated prose)
+- A [Gemini API key](https://aistudio.google.com/apikey) (optional — without
+  one, the agent falls back to a template reply and the guardrail logic
+  still works, just without generated prose)
 
 ### Backend
 
@@ -137,11 +136,11 @@ python run.py
 ```
 
 The server runs at `http://127.0.0.1:8000`. On first run, `sentence-transformers`
-downloads its embedding model (~80MB) from Hugging Face — that needs an
-internet connection once, after which it's cached locally. The vector index
-and the intent model are both built automatically on first startup if they
-don't already exist; `train_model.py` and `data/build_vector_store.py` let you
-regenerate either by hand.
+downloads its embedding model (~80MB) from Hugging Face, which needs an
+internet connection once and is then cached locally. The vector index and
+the intent model are both built automatically on first startup if they
+don't already exist. Run `train_model.py` or `data/build_vector_store.py`
+by hand to rebuild either one.
 
 ### Frontend
 
@@ -172,18 +171,3 @@ pytest
 | `POST /feedback` | Log a thumbs up/down on a reply |
 | `POST /escalate` | Hand a case to a human, returns a ticket reference |
 | `GET /stats` | Resolution rate, per-intent breakdown, and knowledge gaps |
-
-## Known limitations
-
-- The intent classifier is trained on 120 examples across 8 categories — solid
-  for a portfolio-scale knowledge base, but it won't generalize to intents
-  outside that set. Add rows to `data/incidents.csv` and re-run `train_model.py`
-  to extend it.
-- CSV logging is intentionally simple (no database to run), which means
-  concurrent writes aren't safely serialized beyond a basic lock — fine for a
-  single-instance deployment, not for scaling out.
-- Language detection on very short messages (a few words) is unreliable by
-  nature; the language picker in the UI exists specifically so a customer
-  isn't stuck with a bad guess.
-
-
